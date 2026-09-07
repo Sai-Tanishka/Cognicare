@@ -1,5 +1,6 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:uuid/uuid.dart';
 
 class LocalDatabase {
   static Database? _database;
@@ -56,6 +57,51 @@ class LocalDatabase {
             last_error TEXT
           )
         ''');
+      },
+    );
+  }
+
+  static Future<void> saveGameAttempt({
+    required String patientId,
+    String? sessionId,
+    required String gameId,
+    required int difficulty,
+    required double score,
+    required double accuracy,
+    required int attempts,
+    required int correctAnswers,
+    required int incorrectAnswers,
+    required double averageResponseTime,
+    required int hintsUsed,
+    required int retries,
+    String? startedAt,
+    String? completedAt,
+    required int nextDifficulty,
+  }) async {
+    final db = await database;
+
+    final attemptId = const Uuid().v4();
+
+    await db.insert(
+      'game_attempts',
+      {
+        'attempt_id': attemptId,
+        'patient_id': patientId,
+        'session_id': sessionId,
+        'game_id': gameId,
+        'difficulty': difficulty,
+        'score': score,
+        'accuracy': accuracy,
+        'attempts': attempts,
+        'correct_answers': correctAnswers,
+        'incorrect_answers': incorrectAnswers,
+        'average_response_time': averageResponseTime,
+        'hints_used': hintsUsed,
+        'retries': retries,
+        'started_at': startedAt,
+        'completed_at': completedAt,
+        'next_difficulty': nextDifficulty,
+        'sync_status': 'Pending',
       },
     );
   }

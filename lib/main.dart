@@ -6,6 +6,7 @@ void main() async {
 
   await LocalDatabase.database;
 
+  
   runApp(const MyApp());
 }
 
