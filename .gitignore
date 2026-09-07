@@ -46,3 +46,12 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+# Python virtual environment
+backend/.venv/
+
+# Environment variables / secrets
+backend/.env
+
+# Python cache
+__pycache__/
+*.pyc
