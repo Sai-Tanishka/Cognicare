@@ -5,7 +5,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await LocalDatabase.database;
-
+   
   
   runApp(const MyApp());
 }

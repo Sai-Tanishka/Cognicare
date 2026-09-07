@@ -62,27 +62,30 @@ class LocalDatabase {
   }
 
   static Future<void> saveGameAttempt({
-    required String patientId,
-    String? sessionId,
-    required String gameId,
-    required int difficulty,
-    required double score,
-    required double accuracy,
-    required int attempts,
-    required int correctAnswers,
-    required int incorrectAnswers,
-    required double averageResponseTime,
-    required int hintsUsed,
-    required int retries,
-    String? startedAt,
-    String? completedAt,
-    required int nextDifficulty,
-  }) async {
-    final db = await database;
+  required String patientId,
+  String? sessionId,
+  required String gameId,
+  required int difficulty,
+  required double score,
+  required double accuracy,
+  required int attempts,
+  required int correctAnswers,
+  required int incorrectAnswers,
+  required double averageResponseTime,
+  required int hintsUsed,
+  required int retries,
+  String? startedAt,
+  String? completedAt,
+  required int nextDifficulty,
+}) async {
+  final db = await database;
 
-    final attemptId = const Uuid().v4();
+  final attemptId = const Uuid().v4();
+  final eventId = const Uuid().v4();
+  final now = DateTime.now().toIso8601String();
 
-    await db.insert(
+  await db.transaction((txn) async {
+    await txn.insert(
       'game_attempts',
       {
         'attempt_id': attemptId,
@@ -104,5 +107,21 @@ class LocalDatabase {
         'sync_status': 'Pending',
       },
     );
-  }
+
+    await txn.insert(
+      'sync_queue',
+      {
+        'event_id': eventId,
+        'entity_type': 'game_attempt',
+        'entity_id': attemptId,
+        'event_type': 'CREATE',
+        'status': 'Pending',
+        'created_at': now,
+        'synced_at': null,
+        'retry_count': 0,
+        'last_error': null,
+      },
+    );
+  });
+}
 }
