@@ -125,7 +125,7 @@ class LocalDatabase {
     });
   }
 
-  static Future<List<Map<String, dynamic>>> getPendingSyncEvents() async {
+   static Future<List<Map<String, dynamic>>> getPendingSyncEvents() async {
     final db = await database;
 
     return await db.query(
@@ -134,5 +134,92 @@ class LocalDatabase {
       whereArgs: ['Pending'],
       orderBy: 'created_at ASC',
     );
+  }
+
+  static Future<void> markSyncEventSynced(String eventId) async {
+    final db = await database;
+
+    await db.transaction((txn) async {
+      final events = await txn.query(
+        'sync_queue',
+        where: 'event_id = ?',
+        whereArgs: [eventId],
+        limit: 1,
+      );
+
+      if (events.isEmpty) {
+        return;
+      }
+
+      final entityType = events.first['entity_type'];
+      final entityId = events.first['entity_id'];
+
+      await txn.update(
+        'sync_queue',
+        {
+          'status': 'Synced',
+          'synced_at': DateTime.now().toIso8601String(),
+          'last_error': null,
+        },
+        where: 'event_id = ?',
+        whereArgs: [eventId],
+      );
+
+      if (entityType == 'game_attempt') {
+        await txn.update(
+          'game_attempts',
+          {
+            'sync_status': 'Synced',
+          },
+          where: 'attempt_id = ?',
+          whereArgs: [entityId],
+        );
+      }
+    });
+  }
+
+  static Future<void> markSyncEventFailed(
+    String eventId,
+    String errorMessage,
+  ) async {
+    final db = await database;
+
+    await db.transaction((txn) async {
+      final events = await txn.query(
+        'sync_queue',
+        where: 'event_id = ?',
+        whereArgs: [eventId],
+        limit: 1,
+      );
+
+      if (events.isEmpty) {
+        return;
+      }
+
+      final entityType = events.first['entity_type'];
+      final entityId = events.first['entity_id'];
+
+      await txn.update(
+        'sync_queue',
+        {
+          'status': 'Failed',
+          'retry_count': (events.first['retry_count'] as int) + 1,
+          'last_error': errorMessage,
+        },
+        where: 'event_id = ?',
+        whereArgs: [eventId],
+      );
+
+      if (entityType == 'game_attempt') {
+        await txn.update(
+          'game_attempts',
+          {
+            'sync_status': 'Failed',
+          },
+          where: 'attempt_id = ?',
+          whereArgs: [entityId],
+        );
+      }
+    });
   }
 }
