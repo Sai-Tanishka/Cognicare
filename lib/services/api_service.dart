@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 
 class ApiService {
+    static String generateEventId() {
+    return const Uuid().v4();
+  }
   // FastAPI backend
   static const String baseUrl = 'http://127.0.0.1:8000';
 
