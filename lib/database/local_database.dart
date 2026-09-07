@@ -62,66 +62,77 @@ class LocalDatabase {
   }
 
   static Future<void> saveGameAttempt({
-  required String patientId,
-  String? sessionId,
-  required String gameId,
-  required int difficulty,
-  required double score,
-  required double accuracy,
-  required int attempts,
-  required int correctAnswers,
-  required int incorrectAnswers,
-  required double averageResponseTime,
-  required int hintsUsed,
-  required int retries,
-  String? startedAt,
-  String? completedAt,
-  required int nextDifficulty,
-}) async {
-  final db = await database;
+    required String patientId,
+    String? sessionId,
+    required String gameId,
+    required int difficulty,
+    required double score,
+    required double accuracy,
+    required int attempts,
+    required int correctAnswers,
+    required int incorrectAnswers,
+    required double averageResponseTime,
+    required int hintsUsed,
+    required int retries,
+    String? startedAt,
+    String? completedAt,
+    required int nextDifficulty,
+  }) async {
+    final db = await database;
 
-  final attemptId = const Uuid().v4();
-  final eventId = const Uuid().v4();
-  final now = DateTime.now().toIso8601String();
+    final attemptId = const Uuid().v4();
+    final eventId = const Uuid().v4();
+    final now = DateTime.now().toIso8601String();
 
-  await db.transaction((txn) async {
-    await txn.insert(
-      'game_attempts',
-      {
-        'attempt_id': attemptId,
-        'patient_id': patientId,
-        'session_id': sessionId,
-        'game_id': gameId,
-        'difficulty': difficulty,
-        'score': score,
-        'accuracy': accuracy,
-        'attempts': attempts,
-        'correct_answers': correctAnswers,
-        'incorrect_answers': incorrectAnswers,
-        'average_response_time': averageResponseTime,
-        'hints_used': hintsUsed,
-        'retries': retries,
-        'started_at': startedAt,
-        'completed_at': completedAt,
-        'next_difficulty': nextDifficulty,
-        'sync_status': 'Pending',
-      },
-    );
+    await db.transaction((txn) async {
+      await txn.insert(
+        'game_attempts',
+        {
+          'attempt_id': attemptId,
+          'patient_id': patientId,
+          'session_id': sessionId,
+          'game_id': gameId,
+          'difficulty': difficulty,
+          'score': score,
+          'accuracy': accuracy,
+          'attempts': attempts,
+          'correct_answers': correctAnswers,
+          'incorrect_answers': incorrectAnswers,
+          'average_response_time': averageResponseTime,
+          'hints_used': hintsUsed,
+          'retries': retries,
+          'started_at': startedAt,
+          'completed_at': completedAt,
+          'next_difficulty': nextDifficulty,
+          'sync_status': 'Pending',
+        },
+      );
 
-    await txn.insert(
+      await txn.insert(
+        'sync_queue',
+        {
+          'event_id': eventId,
+          'entity_type': 'game_attempt',
+          'entity_id': attemptId,
+          'event_type': 'CREATE',
+          'status': 'Pending',
+          'created_at': now,
+          'synced_at': null,
+          'retry_count': 0,
+          'last_error': null,
+        },
+      );
+    });
+  }
+
+  static Future<List<Map<String, dynamic>>> getPendingSyncEvents() async {
+    final db = await database;
+
+    return await db.query(
       'sync_queue',
-      {
-        'event_id': eventId,
-        'entity_type': 'game_attempt',
-        'entity_id': attemptId,
-        'event_type': 'CREATE',
-        'status': 'Pending',
-        'created_at': now,
-        'synced_at': null,
-        'retry_count': 0,
-        'last_error': null,
-      },
+      where: 'status = ?',
+      whereArgs: ['Pending'],
+      orderBy: 'created_at ASC',
     );
-  });
-}
+  }
 }
