@@ -8,37 +8,46 @@ class MoodPage extends StatefulWidget {
 }
 
 class _MoodPageState extends State<MoodPage> {
-  int? selectedMood;
-  final TextEditingController noteController = TextEditingController();
+  String? selectedMood;
 
   final List<Map<String, dynamic>> moods = [
-    {'emoji': '😊', 'name': 'Happy', 'color': Color(0xFFE4EFEA)},
-    {'emoji': '🙂', 'name': 'Good', 'color': Color(0xFFE5E9F0)},
-    {'emoji': '😐', 'name': 'Okay', 'color': Color(0xFFF1E8D8)},
-    {'emoji': '😔', 'name': 'Sad', 'color': Color(0xFFE8E4F1)},
-    {'emoji': '😟', 'name': 'Worried', 'color': Color(0xFFF3E1E1)},
+    {'name': 'Happy', 'emoji': '😊', 'color': Color(0xFFFFF1C7)},
+    {'name': 'Calm', 'emoji': '😌', 'color': Color(0xFFE4EFEA)},
+    {'name': 'Okay', 'emoji': '🙂', 'color': Color(0xFFE8EDF5)},
+    {'name': 'Sad', 'emoji': '😔', 'color': Color(0xFFE5E3F2)},
+    {'name': 'Anxious', 'emoji': '😟', 'color': Color(0xFFF6E5E0)},
   ];
 
-  @override
-  void dispose() {
-    noteController.dispose();
-    super.dispose();
+  final List<Map<String, dynamic>> moodHistory = [
+    {'day': 'Mon', 'mood': 'Happy', 'emoji': '😊', 'score': 5},
+    {'day': 'Tue', 'mood': 'Calm', 'emoji': '😌', 'score': 4},
+    {'day': 'Wed', 'mood': 'Okay', 'emoji': '🙂', 'score': 3},
+    {'day': 'Thu', 'mood': 'Happy', 'emoji': '😊', 'score': 5},
+    {'day': 'Fri', 'mood': 'Calm', 'emoji': '😌', 'score': 4},
+    {'day': 'Sat', 'mood': 'Happy', 'emoji': '😊', 'score': 5},
+    {'day': 'Sun', 'mood': 'Okay', 'emoji': '🙂', 'score': 3},
+  ];
+
+  void selectMood(String mood) {
+    setState(() {
+      selectedMood = mood;
+    });
   }
 
-  void _saveMood() {
+  void saveMood() {
     if (selectedMood == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select how you are feeling.')),
+        const SnackBar(content: Text('Please select your mood first.')),
       );
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Mood saved: ${moods[selectedMood!]['name']}'),
-        duration: const Duration(seconds: 2),
-      ),
+      SnackBar(content: Text('Your $selectedMood mood has been recorded.')),
     );
+
+    // TODO:
+    // Send selected mood to backend later.
   }
 
   @override
@@ -49,6 +58,15 @@ class _MoodPageState extends State<MoodPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F7F2),
         elevation: 0,
+
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+
+          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF173B35)),
+        ),
+
         title: const Text(
           'My Mood',
           style: TextStyle(
@@ -61,13 +79,18 @@ class _MoodPageState extends State<MoodPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // =================================================
+              // INTRODUCTION
+              // =================================================
+
               const Text(
-                'How are you feeling?',
+                'How are you feeling today?',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 25,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF173B35),
                 ),
@@ -76,71 +99,76 @@ class _MoodPageState extends State<MoodPage> {
               const SizedBox(height: 8),
 
               const Text(
-                'Choose the mood that best describes you today.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                'Take a moment to tell us how you feel.',
+                style: TextStyle(fontSize: 15, color: Colors.grey),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 22),
 
+              // =================================================
+              // MOOD SELECTION
+              // =================================================
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
+
                 itemCount: moods.length,
+
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                  childAspectRatio: 1.25,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.45,
                 ),
+
                 itemBuilder: (context, index) {
                   final mood = moods[index];
-                  final isSelected = selectedMood == index;
 
-                  return InkWell(
+                  final bool isSelected = selectedMood == mood['name'];
+
+                  return GestureDetector(
                     onTap: () {
-                      setState(() {
-                        selectedMood = index;
-                      });
+                      selectMood(mood['name'] as String);
                     },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
+
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+
                       decoration: BoxDecoration(
-                        color: mood['color'],
+                        color: mood['color'] as Color,
+
                         borderRadius: BorderRadius.circular(20),
+
                         border: Border.all(
                           color: isSelected
                               ? const Color(0xFF376B5C)
                               : Colors.transparent,
-                          width: 3,
+
+                          width: isSelected ? 3 : 0,
                         ),
                       ),
+
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
+
                         children: [
                           Text(
-                            mood['emoji'],
-                            style: const TextStyle(fontSize: 42),
+                            mood['emoji'] as String,
+                            style: const TextStyle(fontSize: 35),
                           ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 7),
 
                           Text(
-                            mood['name'],
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF173B35),
+                            mood['name'] as String,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? const Color(0xFF376B5C)
+                                  : const Color(0xFF173B35),
                             ),
                           ),
-
-                          if (isSelected) ...[
-                            const SizedBox(height: 5),
-                            const Icon(
-                              Icons.check_circle_rounded,
-                              size: 20,
-                              color: Color(0xFF376B5C),
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -148,12 +176,46 @@ class _MoodPageState extends State<MoodPage> {
                 },
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 18),
 
+              // =================================================
+              // SAVE BUTTON
+              // =================================================
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+
+                child: ElevatedButton.icon(
+                  onPressed: saveMood,
+
+                  icon: const Icon(Icons.check_circle_outline),
+
+                  label: const Text(
+                    'Save My Mood',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF376B5C),
+
+                    foregroundColor: Colors.white,
+
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // =================================================
+              // TODAY'S MOOD
+              // =================================================
               const Text(
-                'Want to say something?',
+                "Today's Mood",
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 21,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF173B35),
                 ),
@@ -161,74 +223,356 @@ class _MoodPageState extends State<MoodPage> {
 
               const SizedBox(height: 12),
 
-              TextField(
-                controller: noteController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Write a short note...',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.all(18),
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              SizedBox(
+              Container(
                 width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  onPressed: _saveMood,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF376B5C),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(17),
+                padding: const EdgeInsets.all(20),
+
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+
+                child: Row(
+                  children: [
+                    Container(
+                      width: 65,
+                      height: 65,
+
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE4EFEA),
+                        shape: BoxShape.circle,
+                      ),
+
+                      child: Center(
+                        child: Text(
+                          selectedMood == null
+                              ? '🙂'
+                              : _getEmoji(selectedMood!),
+
+                          style: const TextStyle(fontSize: 35),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Save Mood',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                  ),
+
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+                          Text(
+                            selectedMood ?? 'Not recorded yet',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF173B35),
+                            ),
+                          ),
+
+                          const SizedBox(height: 5),
+
+                          Text(
+                            selectedMood == null
+                                ? 'Choose a mood above.'
+                                : 'Thank you for sharing how you feel.',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
+
+              // =================================================
+              // MOOD TREND
+              // =================================================
+              const Text(
+                'Mood Trend',
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF173B35),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              const Text(
+                'Your mood during the past week.',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+
+              const SizedBox(height: 15),
 
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
+
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 180,
+
+                      child: CustomPaint(
+                        painter: _MoodChartPainter(moodHistory),
+
+                        child: Container(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+
+                      children: moodHistory.map((item) {
+                        return Text(
+                          item['day'] as String,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // =================================================
+              // WEEKLY SUMMARY
+              // =================================================
+              const Text(
+                'Weekly Summary',
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF173B35),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _summaryCard(
+                      Icons.sentiment_satisfied_alt_rounded,
+                      'Positive Days',
+                      '5',
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: _summaryCard(
+                      Icons.favorite_border_rounded,
+                      'Mood Score',
+                      '4.1 / 5',
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+
                 decoration: BoxDecoration(
                   color: const Color(0xFFE4EFEA),
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Row(
+
+                child: Row(
                   children: [
-                    Icon(
-                      Icons.favorite_outline_rounded,
+                    const Icon(
+                      Icons.lightbulb_outline_rounded,
                       color: Color(0xFF376B5C),
+                      size: 30,
                     ),
-                    SizedBox(width: 12),
-                    Expanded(
+
+                    const SizedBox(width: 14),
+
+                    const Expanded(
                       child: Text(
-                        'Tracking your mood can help you understand how you feel over time.',
+                        'You have been feeling positive most days this week. Keep following your daily routine!',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF376B5C),
+                          height: 1.4,
+                          color: Color(0xFF173B35),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+
+              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
     );
+  }
+
+  // ==========================================================
+  // EMOJI HELPER
+  // ==========================================================
+
+  String _getEmoji(String mood) {
+    switch (mood) {
+      case 'Happy':
+        return '😊';
+
+      case 'Calm':
+        return '😌';
+
+      case 'Okay':
+        return '🙂';
+
+      case 'Sad':
+        return '😔';
+
+      case 'Anxious':
+        return '😟';
+
+      default:
+        return '🙂';
+    }
+  }
+
+  // ==========================================================
+  // SUMMARY CARD
+  // ==========================================================
+
+  Widget _summaryCard(IconData icon, String title, String value) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+
+        children: [
+          Icon(icon, color: const Color(0xFF376B5C), size: 28),
+
+          const SizedBox(height: 12),
+
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF173B35),
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// MOOD CHART
+// ============================================================
+
+class _MoodChartPainter extends CustomPainter {
+  final List<Map<String, dynamic>> data;
+
+  _MoodChartPainter(this.data);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF376B5C)
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+
+    final dotPaint = Paint()
+      ..color = const Color(0xFF376B5C)
+      ..style = PaintingStyle.fill;
+
+    final gridPaint = Paint()
+      ..color = const Color(0xFFE5E5E5)
+      ..strokeWidth = 1;
+
+    const double leftPadding = 25;
+    const double rightPadding = 10;
+    const double topPadding = 15;
+    const double bottomPadding = 10;
+
+    final chartWidth = size.width - leftPadding - rightPadding;
+
+    final chartHeight = size.height - topPadding - bottomPadding;
+
+    // Grid lines
+    for (int i = 1; i <= 5; i++) {
+      final y = topPadding + chartHeight - ((i - 1) / 4) * chartHeight;
+
+      canvas.drawLine(
+        Offset(leftPadding, y),
+        Offset(size.width - rightPadding, y),
+        gridPaint,
+      );
+    }
+
+    final path = Path();
+
+    for (int i = 0; i < data.length; i++) {
+      final score = data[i]['score'] as int;
+
+      final x = leftPadding + (i / (data.length - 1)) * chartWidth;
+
+      final y = topPadding + chartHeight - ((score - 1) / 4) * chartHeight;
+
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    canvas.drawPath(path, paint);
+
+    // Points
+    for (int i = 0; i < data.length; i++) {
+      final score = data[i]['score'] as int;
+
+      final x = leftPadding + (i / (data.length - 1)) * chartWidth;
+
+      final y = topPadding + chartHeight - ((score - 1) / 4) * chartHeight;
+
+      canvas.drawCircle(Offset(x, y), 5, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MoodChartPainter oldDelegate) {
+    return oldDelegate.data != data;
   }
 }

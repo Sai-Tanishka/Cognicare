@@ -3,14 +3,40 @@ import 'package:flutter/material.dart';
 class ActivitiesPage extends StatelessWidget {
   const ActivitiesPage({super.key});
 
-  void _showGameMessage(BuildContext context, String gameName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$gameName selected'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-  }
+  static const List<Map<String, dynamic>> games = [
+    {
+      'title': 'Memory Match',
+      'description': 'Match the cards and test your memory.',
+      'icon': Icons.grid_view_rounded,
+      'difficulty': 'Easy',
+      'progress': 75,
+      'status': 'Good Progress',
+    },
+    {
+      'title': 'Pattern Recall',
+      'description': 'Remember the pattern and find it again.',
+      'icon': Icons.pattern_rounded,
+      'difficulty': 'Medium',
+      'progress': 60,
+      'status': 'Improving',
+    },
+    {
+      'title': 'Number Sequence',
+      'description': 'Find the missing number in the sequence.',
+      'icon': Icons.format_list_numbered_rounded,
+      'difficulty': 'Medium',
+      'progress': 45,
+      'status': 'Keep Practicing',
+    },
+    {
+      'title': 'Odd One Out',
+      'description': 'Find the item that is different.',
+      'icon': Icons.visibility_outlined,
+      'difficulty': 'Easy',
+      'progress': 80,
+      'status': 'Good Progress',
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +45,12 @@ class ActivitiesPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F7F2),
         elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF173B35)),
+        ),
         title: const Text(
-          'Activities',
+          'Games',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF173B35),
@@ -28,86 +58,56 @@ class ActivitiesPage extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Train Your Mind',
+                "Let's Play!",
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 27,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF173B35),
                 ),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 7),
 
               const Text(
-                'Choose an activity and give your brain a workout.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                'Choose a game and give your brain a little workout.',
+                style: TextStyle(fontSize: 15, color: Colors.grey, height: 1.4),
               ),
 
-              const SizedBox(height: 25),
+              const SizedBox(height: 24),
 
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.95,
-                  children: [
-                    // MEMORY MATCH
-                    _activityCard(
-                      context,
-                      Icons.psychology_rounded,
-                      'Memory Match',
-                      'Match the pairs',
-                      const Color(0xFFE4EFEA),
-                      () {
-                        _showGameMessage(context, 'Memory Match');
-                      },
-                    ),
+              _buildTodayProgress(),
 
-                    // PATTERN RECALL
-                    _activityCard(
-                      context,
-                      Icons.grid_view_rounded,
-                      'Pattern Recall',
-                      'Remember the pattern',
-                      const Color(0xFFE8E4F1),
-                      () {
-                        _showGameMessage(context, 'Pattern Recall');
-                      },
-                    ),
+              const SizedBox(height: 28),
 
-                    // ODD ONE OUT
-                    _activityCard(
-                      context,
-                      Icons.visibility_rounded,
-                      'Odd One Out',
-                      'Find what\'s different',
-                      const Color(0xFFF1E8D8),
-                      () {
-                        _showGameMessage(context, 'Odd One Out');
-                      },
-                    ),
-
-                    // NUMBER SEQUENCE
-                    _activityCard(
-                      context,
-                      Icons.pin_rounded,
-                      'Number Sequence',
-                      'Recall the order',
-                      const Color(0xFFE5E9F0),
-                      () {
-                        _showGameMessage(context, 'Number Sequence');
-                      },
-                    ),
-                  ],
+              const Text(
+                'Choose a Game',
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF173B35),
                 ),
               ),
+
+              const SizedBox(height: 14),
+
+              ...games.map(
+                (game) => Padding(
+                  padding: const EdgeInsets.only(bottom: 15),
+                  child: _buildGameCard(context, game),
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              _buildInfoCard(),
+
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -115,73 +115,270 @@ class ActivitiesPage extends StatelessWidget {
     );
   }
 
-  Widget _activityCard(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String subtitle,
-    Color iconBackground,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+  Widget _buildTodayProgress() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE4EFEA),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: const Color(0xFF376B5C),
+              borderRadius: BorderRadius.circular(17),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 65,
-              height: 65,
-              decoration: BoxDecoration(
-                color: iconBackground,
-                borderRadius: BorderRadius.circular(18),
+            child: const Icon(
+              Icons.emoji_events_rounded,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+
+          const SizedBox(width: 15),
+
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Today's Progress",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF173B35),
+                  ),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  '3 games completed today',
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+
+          const Text(
+            '3 / 5',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF376B5C),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGameCard(BuildContext context, Map<String, dynamic> game) {
+    final int progress = game['progress'] as int;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE4EFEA),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  game['icon'] as IconData,
+                  color: const Color(0xFF376B5C),
+                  size: 29,
+                ),
               ),
-              child: Icon(icon, size: 35, color: const Color(0xFF376B5C)),
+
+              const SizedBox(width: 14),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      game['title'] as String,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF173B35),
+                      ),
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Text(
+                      game['description'] as String,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey,
+                        height: 1.3,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE4EFEA),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            game['difficulty'] as String,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF376B5C),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        Text(
+                          game['status'] as String,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              const Text(
+                'Progress',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: progress / 100,
+                    minHeight: 7,
+                    backgroundColor: const Color(0xFFE8EDEB),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF376B5C),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Text(
+                '$progress%',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF376B5C),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 15),
+
+          SizedBox(
+            width: double.infinity,
+            height: 45,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${game['title']} will open here.')),
+                );
+
+                // TODO:
+                // Connect actual game screen here.
+              },
+              icon: const Icon(Icons.play_arrow_rounded, size: 21),
+              label: const Text(
+                'Start Game',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF376B5C),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            const Spacer(),
+  Widget _buildInfoCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDDE7E2)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.lightbulb_outline_rounded,
+            color: Color(0xFF376B5C),
+            size: 25,
+          ),
 
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
+          SizedBox(width: 12),
+
+          Expanded(
+            child: Text(
+              'Playing regularly can help you stay engaged and practice different cognitive skills.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
                 color: Color(0xFF173B35),
               ),
             ),
-
-            const SizedBox(height: 6),
-
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 13, color: Colors.grey),
-            ),
-
-            const SizedBox(height: 10),
-
-            const Align(
-              alignment: Alignment.bottomRight,
-              child: Icon(
-                Icons.arrow_forward_rounded,
-                size: 22,
-                color: Color(0xFF376B5C),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
