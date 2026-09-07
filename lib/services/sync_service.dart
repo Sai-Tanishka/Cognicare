@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import '../database/local_database.dart';
 
 class SyncService {
-  static const String baseUrl = 'http://172.18.95.116:8000';
+ static const String baseUrl = 'http://10.0.2.2:8000';
 
   static Future<void> syncPendingEvents() async {
     final hasConnection = await _hasInternetConnection();
