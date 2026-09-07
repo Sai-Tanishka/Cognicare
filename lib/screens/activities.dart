@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../games/memory_match/memory_match_screen.dart';
+import '../games/pattern_recall/pattern_recall_screen.dart';
+import '../games/odd_one_out/odd_one_out_screen.dart';
+import '../games/number_sequence/number_sequence_screen.dart';
+
 class ActivitiesPage extends StatelessWidget {
   const ActivitiesPage({super.key});
 
@@ -322,12 +327,36 @@ class ActivitiesPage extends StatelessWidget {
             height: 45,
             child: ElevatedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${game['title']} will open here.')),
-                );
+                final gameTitle = game['title'] as String;
 
-                // TODO:
-                // Connect actual game screen here.
+                Widget? gameScreen;
+
+                switch (gameTitle) {
+                  case 'Memory Match':
+                    gameScreen = const MemoryMatchScreen();
+                    break;
+
+                  case 'Pattern Recall':
+                    gameScreen = const PatternRecallScreen();
+                    break;
+
+                  case 'Odd One Out':
+                    gameScreen = const OddOneOutScreen();
+                    break;
+
+                  case 'Number Sequence':
+                    gameScreen = const NumberSequenceScreen();
+                    break;
+                }
+
+                if (gameScreen != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => gameScreen!,
+                    ),
+                  );
+                }
               },
               icon: const Icon(Icons.play_arrow_rounded, size: 21),
               label: const Text(
