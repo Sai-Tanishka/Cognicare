@@ -93,6 +93,7 @@ CREATE TABLE game_sessions (
 CREATE TABLE game_attempts (
     attempt_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id UUID NOT NULL UNIQUE,
+
     patient_id UUID NOT NULL,
     session_id UUID NOT NULL,
     game_id UUID NOT NULL,
@@ -213,6 +214,9 @@ CREATE INDEX idx_game_attempts_session
 
 CREATE INDEX idx_game_attempts_game
     ON game_attempts(game_id);
+
+CREATE INDEX idx_game_attempts_event_id
+    ON game_attempts(event_id);
 
 CREATE INDEX idx_reminders_patient
     ON reminders(patient_id);

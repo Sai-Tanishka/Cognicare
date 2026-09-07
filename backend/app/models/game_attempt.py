@@ -15,6 +15,12 @@ class GameAttempt(Base):
     )
     event_id = Column(UUID(as_uuid=True), nullable=False, unique=True)
 
+    event_id = Column(
+        UUID(as_uuid=True),
+        unique=True,
+        nullable=False
+    )
+
     patient_id = Column(UUID(as_uuid=True), nullable=False)
     session_id = Column(UUID(as_uuid=True), nullable=False)
     game_id = Column(UUID(as_uuid=True), nullable=False)
