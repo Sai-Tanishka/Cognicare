@@ -1,0 +1,227 @@
+-- Enable UUID generation
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+
+-- =========================================================
+-- 1. PATIENTS
+-- =========================================================
+
+CREATE TABLE patients (
+    patient_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    date_of_birth DATE,
+    gender VARCHAR(20),
+    preferred_language VARCHAR(50),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
+-- =========================================================
+-- 2. CAREGIVERS
+-- =========================================================
+
+CREATE TABLE caregivers (
+    caregiver_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
+-- =========================================================
+-- 3. CAREGIVER ↔ PATIENT RELATIONSHIP
+-- =========================================================
+
+CREATE TABLE caregiver_patient (
+    relationship_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    caregiver_id UUID NOT NULL,
+    patient_id UUID NOT NULL,
+    relationship_type VARCHAR(50),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_caregiver
+        FOREIGN KEY (caregiver_id)
+        REFERENCES caregivers(caregiver_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT unique_caregiver_patient
+        UNIQUE (caregiver_id, patient_id)
+);
+
+
+-- =========================================================
+-- 4. GAMES / ACTIVITIES
+-- =========================================================
+
+CREATE TABLE games (
+    game_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    category VARCHAR(50),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
+-- =========================================================
+-- 5. GAME SESSIONS
+-- =========================================================
+
+CREATE TABLE game_sessions (
+    session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+
+    CONSTRAINT fk_session_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE CASCADE
+);
+
+
+-- =========================================================
+-- 6. GAME ATTEMPTS
+-- =========================================================
+
+CREATE TABLE game_attempts (
+    attempt_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    patient_id UUID NOT NULL,
+    session_id UUID NOT NULL,
+    game_id UUID NOT NULL,
+
+    difficulty INTEGER NOT NULL,
+    score INTEGER NOT NULL DEFAULT 0,
+    accuracy DECIMAL(5,2),
+
+    attempts INTEGER NOT NULL DEFAULT 0,
+    correct_answers INTEGER NOT NULL DEFAULT 0,
+    incorrect_answers INTEGER NOT NULL DEFAULT 0,
+
+    average_response_time DECIMAL(10,2),
+
+    hints_used INTEGER NOT NULL DEFAULT 0,
+    retries INTEGER NOT NULL DEFAULT 0,
+
+    started_at TIMESTAMPTZ NOT NULL,
+    completed_at TIMESTAMPTZ,
+
+    next_difficulty INTEGER,
+
+    CONSTRAINT fk_attempt_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_attempt_session
+        FOREIGN KEY (session_id)
+        REFERENCES game_sessions(session_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_attempt_game
+        FOREIGN KEY (game_id)
+        REFERENCES games(game_id)
+        ON DELETE CASCADE
+);
+
+
+-- =========================================================
+-- 7. REMINDERS
+-- =========================================================
+
+CREATE TABLE reminders (
+    reminder_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    patient_id UUID NOT NULL,
+
+    reminder_type VARCHAR(50) NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+
+    scheduled_time TIMESTAMPTZ NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_reminder_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE CASCADE
+);
+
+
+-- =========================================================
+-- 8. REMINDER EVENTS
+-- =========================================================
+
+CREATE TABLE reminder_events (
+    reminder_event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    reminder_id UUID NOT NULL,
+
+    event_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    status VARCHAR(30) NOT NULL,
+
+    CONSTRAINT fk_reminder_event
+        FOREIGN KEY (reminder_id)
+        REFERENCES reminders(reminder_id)
+        ON DELETE CASCADE
+);
+
+
+-- =========================================================
+-- 9. OFFLINE SYNC EVENTS
+-- =========================================================
+
+CREATE TABLE sync_events (
+    sync_event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    patient_id UUID NOT NULL,
+
+    event_type VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id UUID,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    synced_at TIMESTAMPTZ,
+
+    CONSTRAINT fk_sync_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE CASCADE
+);
+
+
+-- =========================================================
+-- INDEXES
+-- =========================================================
+
+CREATE INDEX idx_game_attempts_patient
+    ON game_attempts(patient_id);
+
+CREATE INDEX idx_game_attempts_session
+    ON game_attempts(session_id);
+
+CREATE INDEX idx_game_attempts_game
+    ON game_attempts(game_id);
+
+CREATE INDEX idx_reminders_patient
+    ON reminders(patient_id);
+
+CREATE INDEX idx_reminder_events_reminder
+    ON reminder_events(reminder_id);
+
+CREATE INDEX idx_sync_events_patient
+    ON sync_events(patient_id);
+
+CREATE INDEX idx_sync_events_status
+    ON sync_events(status);
