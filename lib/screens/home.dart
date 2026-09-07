@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'profile.dart';
 import 'activities.dart';
+import 'remainders.dart';
+import 'mood.dart';
+import 'voice_assistant.dart';
+import 'progress.dart';
 
 class PatientHomePage extends StatefulWidget {
   const PatientHomePage({super.key});
@@ -29,13 +34,15 @@ class _PatientHomePageState extends State<PatientHomePage> {
         MaterialPageRoute(builder: (context) => const ActivitiesPage()),
       );
     } else if (index == 2) {
-      setState(() {
-        _currentIndex = 2;
-      });
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProgressPage()),
+      );
     } else if (index == 3) {
-      setState(() {
-        _currentIndex = 3;
-      });
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfilePage()),
+      );
     }
   }
 
@@ -123,6 +130,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
 
             const SizedBox(height: 24),
 
+            // Patient greeting card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -159,7 +167,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
                           color: Color(0xFF173B35),
                         ),
                       ),
+
                       SizedBox(height: 5),
+
                       Text(
                         'Ready for today?',
                         style: TextStyle(fontSize: 15, color: Colors.grey),
@@ -172,6 +182,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
 
             const SizedBox(height: 24),
 
+            // Today's progress
             const Text(
               'Today’s Progress',
               style: TextStyle(
@@ -203,6 +214,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+
                       Text(
                         '40%',
                         style: TextStyle(
@@ -240,6 +252,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
 
             const SizedBox(height: 26),
 
+            // Main actions
             const Text(
               'What would you like to do?',
               style: TextStyle(
@@ -251,7 +264,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
 
             const SizedBox(height: 14),
 
-            // ACTIVITIES
+            // Activities
             _buildActionCard(
               icon: Icons.psychology_rounded,
               title: 'Activities',
@@ -269,40 +282,53 @@ class _PatientHomePageState extends State<PatientHomePage> {
 
             const SizedBox(height: 14),
 
-            // REMINDERS
+            // Reminders
             _buildActionCard(
               icon: Icons.alarm_rounded,
               title: 'Reminders',
               subtitle: 'Check your reminders',
               color: const Color(0xFFF1E8D8),
               onTap: () {
-                _showButtonMessage('Reminders button clicked');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RemindersPage(),
+                  ),
+                );
               },
             ),
 
             const SizedBox(height: 14),
 
-            // MOOD
+            // Mood
             _buildActionCard(
               icon: Icons.sentiment_satisfied_alt_rounded,
               title: 'How are you feeling?',
               subtitle: 'Track your mood',
               color: const Color(0xFFE8E4F1),
               onTap: () {
-                _showButtonMessage('Mood button clicked');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MoodPage()),
+                );
               },
             ),
 
             const SizedBox(height: 14),
 
-            // VOICE ASSISTANT
+            // Voice Assistant
             _buildActionCard(
               icon: Icons.mic_rounded,
               title: 'Voice Assistant',
               subtitle: 'Talk to Cognicare',
               color: const Color(0xFFE5E9F0),
               onTap: () {
-                _showButtonMessage('Voice Assistant button clicked');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const VoiceAssistantPage(),
+                  ),
+                );
               },
             ),
           ],
@@ -314,10 +340,10 @@ class _PatientHomePageState extends State<PatientHomePage> {
   Widget _buildPlaceholderPage() {
     String title;
 
-    if (_currentIndex == 2) {
-      title = 'Progress';
-    } else {
+    if (_currentIndex == 3) {
       title = 'Profile';
+    } else {
+      title = 'Page';
     }
 
     return Center(
@@ -375,7 +401,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
                       color: Color(0xFF173B35),
                     ),
                   ),
+
                   const SizedBox(height: 4),
+
                   Text(
                     subtitle,
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
