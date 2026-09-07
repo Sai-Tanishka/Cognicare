@@ -68,9 +68,6 @@ class MemoryMatchEngine {
 
       case DifficultyLevel.hard:
         return 6;
-
-      case DifficultyLevel.veryHard:
-        return 8;
     }
   }
 
@@ -84,9 +81,6 @@ class MemoryMatchEngine {
 
       case DifficultyLevel.hard:
         return 'Hard';
-
-      case DifficultyLevel.veryHard:
-        return 'Very Hard';
     }
   }
 

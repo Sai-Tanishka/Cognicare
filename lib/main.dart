@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'games/memory_match/memory_match_screen.dart';
+import 'games/number_sequence/number_sequence_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MemoryMatchScreen(),
+      home: const NumberSequenceScreen(),
     );
   }
 }

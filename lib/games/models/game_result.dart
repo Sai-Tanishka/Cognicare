@@ -60,9 +60,6 @@ class GameResult {
 
       case DifficultyLevel.hard:
         return 3;
-
-      case DifficultyLevel.veryHard:
-        return 4;
     }
   }
 
@@ -82,9 +79,6 @@ class GameResult {
 
       case DifficultyLevel.hard:
         return 3;
-
-      case DifficultyLevel.veryHard:
-        return 4;
     }
   }
 }

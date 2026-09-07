@@ -2,7 +2,6 @@ enum DifficultyLevel {
   easy,
   medium,
   hard,
-  veryHard,
 }
 
 extension DifficultyLevelExtension on DifficultyLevel {
@@ -16,9 +15,6 @@ extension DifficultyLevelExtension on DifficultyLevel {
 
       case DifficultyLevel.hard:
         return 'Hard';
-
-      case DifficultyLevel.veryHard:
-        return 'Very Hard';
     }
   }
 
@@ -32,9 +28,6 @@ extension DifficultyLevelExtension on DifficultyLevel {
 
       case DifficultyLevel.hard:
         return 3;
-
-      case DifficultyLevel.veryHard:
-        return 4;
     }
   }
 }
