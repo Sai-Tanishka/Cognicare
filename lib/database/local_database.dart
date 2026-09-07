@@ -125,7 +125,7 @@ class LocalDatabase {
     });
   }
 
-   static Future<List<Map<String, dynamic>>> getPendingSyncEvents() async {
+  static Future<List<Map<String, dynamic>>> getPendingSyncEvents() async {
     final db = await database;
 
     return await db.query(
@@ -133,6 +133,41 @@ class LocalDatabase {
       where: 'status = ?',
       whereArgs: ['Pending'],
       orderBy: 'created_at ASC',
+    );
+  }
+
+  static Future<Map<String, dynamic>?> getGameAttemptById(
+    String attemptId,
+  ) async {
+    final db = await database;
+
+    final results = await db.query(
+      'game_attempts',
+      where: 'attempt_id = ?',
+      whereArgs: [attemptId],
+      limit: 1,
+    );
+
+    if (results.isEmpty) {
+      return null;
+    }
+
+    return results.first;
+  }
+
+  static Future<void> updateNextDifficulty(
+    String attemptId,
+    int nextDifficulty,
+  ) async {
+    final db = await database;
+
+    await db.update(
+      'game_attempts',
+      {
+        'next_difficulty': nextDifficulty,
+      },
+      where: 'attempt_id = ?',
+      whereArgs: [attemptId],
     );
   }
 
@@ -198,12 +233,13 @@ class LocalDatabase {
 
       final entityType = events.first['entity_type'];
       final entityId = events.first['entity_id'];
+      final retryCount = events.first['retry_count'] as int;
 
       await txn.update(
         'sync_queue',
         {
           'status': 'Failed',
-          'retry_count': (events.first['retry_count'] as int) + 1,
+          'retry_count': retryCount + 1,
           'last_error': errorMessage,
         },
         where: 'event_id = ?',
