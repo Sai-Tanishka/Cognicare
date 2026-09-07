@@ -13,6 +13,7 @@ class GameAttempt(Base):
         primary_key=True,
         server_default=text("gen_random_uuid()")
     )
+    event_id = Column(UUID(as_uuid=True), nullable=False, unique=True)
 
     patient_id = Column(UUID(as_uuid=True), nullable=False)
     session_id = Column(UUID(as_uuid=True), nullable=False)

@@ -92,7 +92,7 @@ CREATE TABLE game_sessions (
 
 CREATE TABLE game_attempts (
     attempt_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
+    event_id UUID NOT NULL UNIQUE,
     patient_id UUID NOT NULL,
     session_id UUID NOT NULL,
     game_id UUID NOT NULL,

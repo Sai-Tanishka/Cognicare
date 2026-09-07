@@ -17,6 +17,7 @@ router = APIRouter(
 
 
 class GameAttemptRequest(BaseModel):
+    event_id: UUID
     patient_id: UUID
     session_id: UUID
     game_id: UUID
@@ -43,6 +44,18 @@ def create_game_attempt(
     data: GameAttemptRequest,
     db: Session = Depends(get_db)
 ):
+    # Check if this event was already processed
+    existing_attempt = db.query(GameAttempt).filter(
+        GameAttempt.event_id == data.event_id
+    ).first()
+
+    if existing_attempt:
+        return {
+            "message": "Game attempt already processed",
+            "attempt_id": existing_attempt.attempt_id,
+            "next_difficulty": existing_attempt.next_difficulty
+        }
+
     # Calculate the next difficulty
     next_difficulty = calculate_next_difficulty(
         data.difficulty,
@@ -51,6 +64,7 @@ def create_game_attempt(
 
     # Create database record
     game_attempt = GameAttempt(
+        event_id=data.event_id,
         patient_id=data.patient_id,
         session_id=data.session_id,
         game_id=data.game_id,
