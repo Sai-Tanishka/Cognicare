@@ -74,6 +74,43 @@ CREATE TABLE games (
 
 
 -- =========================================================
+-- SEED COGNITIVE GAMES
+-- =========================================================
+
+INSERT INTO games (
+    game_id,
+    name,
+    description,
+    category
+)
+VALUES
+(
+    '6a2e63ce-3e84-4583-90d1-4373ddde79fb',
+    'Memory Match',
+    'Test cognitive memory and matching ability.',
+    'Memory'
+),
+(
+    '7e99bd7e-d0cb-480e-a9db-8f548b78692d',
+    'Pattern Recall',
+    'Test visual pattern memory and recall.',
+    'Memory'
+),
+(
+    '389ae015-4d44-425c-a285-c360ab001983',
+    'Odd One Out',
+    'Test attention and visual recognition.',
+    'Attention'
+),
+(
+    '310f6d9d-bc51-44a8-b282-6722742bad58',
+    'Number Sequence',
+    'Test memory, concentration, and numerical sequence recall.',
+    'Memory'
+);
+
+
+-- =========================================================
 -- 5. GAME SESSIONS
 -- =========================================================
 
