@@ -1,0 +1,35 @@
+warning: in the working copy of 'linux/flutter/generated_plugin_registrant.cc', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'linux/flutter/generated_plugins.cmake', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'macos/Flutter/GeneratedPluginRegistrant.swift', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pubspec.lock', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'windows/flutter/generated_plugin_registrant.cc', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'windows/flutter/generated_plugins.cmake', LF will be replaced by CRLF the next time Git touches it
+ .gitignore                                         |   8 [32m+[m[31m-[m
+ CognicareCaregiver/App.js                          | 213 [32m++++++++++++++++++++[m[31m-[m
+ CognicareCaregiver/caregiver/data/patientData.js   |  14 [32m++[m
+ .../caregiver/screens/CaregiverDashboard.js        |  13 [32m+[m[31m-[m
+ .../caregiver/screens/PatientProfileScreen.js      |  23 [32m++[m[31m-[m
+ backend/app/database/connection.py                 |  19 [32m+[m[31m-[m
+ backend/app/main.py                                |  26 [32m++[m[31m-[m
+ backend/database/schema.sql                        |   4 [32m+[m
+ database/schema.sql                                |   4 [32m+[m
+ lib/database/local_database.dart                   |   9 [32m+[m[31m-[m
+ lib/games/memory_match/memory_match_engine.dart    |   3 [32m+[m
+ lib/games/memory_match/memory_match_screen.dart    |  22 [32m++[m[31m-[m
+ .../number_sequence/number_sequence_screen.dart    |  21 [32m+[m[31m-[m
+ lib/games/odd_one_out/odd_one_out_screen.dart      |  21 [32m+[m[31m-[m
+ .../pattern_recall/pattern_recall_screen.dart      |  16 [32m+[m[31m-[m
+ lib/main.dart                                      |  28 [32m++[m[31m-[m
+ lib/screens/activities.dart                        |  73 [32m+++++[m[31m--[m
+ lib/screens/login.dart                             |  29 [32m++[m[31m-[m
+ lib/screens/memory_game.dart                       |   2 [32m+[m[31m-[m
+ lib/screens/profile.dart                           |  31 [32m++[m[31m-[m
+ lib/screens/signup.dart                            |   6 [32m+[m[31m-[m
+ linux/flutter/generated_plugin_registrant.cc       |   4 [32m+[m
+ linux/flutter/generated_plugins.cmake              |   1 [32m+[m
+ macos/Flutter/GeneratedPluginRegistrant.swift      |   4 [32m+[m
+ pubspec.lock                                       | 154 [32m++++++++++++++[m[31m-[m
+ pubspec.yaml                                       |   3 [32m+[m
+ windows/flutter/generated_plugin_registrant.cc     |   3 [32m+[m
+ windows/flutter/generated_plugins.cmake            |   1 [32m+[m
+ 28 files changed, 671 insertions(+), 84 deletions(-)

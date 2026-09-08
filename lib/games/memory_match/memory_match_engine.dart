@@ -71,6 +71,9 @@ class MemoryMatchEngine {
     }
   }
 
+  static int pairsForDifficulty(DifficultyLevel difficulty) =>
+      _pairsForDifficulty(difficulty);
+
   String get difficultyName {
     switch (difficulty) {
       case DifficultyLevel.easy:

@@ -426,7 +426,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 labeledField(
                   'Diagnosis',
                   DropdownButtonFormField<String>(
-                    value: diagnosis,
+                    initialValue: diagnosis,
                     decoration: fieldDecoration(
                       'Select diagnosis',
                       icon: Icons.medical_information_outlined,
@@ -461,7 +461,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 labeledField(
                   'Stage / Severity',
                   DropdownButtonFormField<String>(
-                    value: severity,
+                    initialValue: severity,
                     decoration: fieldDecoration(
                       'Select stage / severity',
                       icon: Icons.speed_rounded,
@@ -535,7 +535,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 labeledField(
                   'Relationship',
                   DropdownButtonFormField<String>(
-                    value: relationship,
+                    initialValue: relationship,
                     decoration: fieldDecoration(
                       'Select relationship',
                       icon: Icons.people_outline_rounded,

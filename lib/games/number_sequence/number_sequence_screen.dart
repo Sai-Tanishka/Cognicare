@@ -7,6 +7,7 @@ import '../core/timer_manager.dart';
 import '../models/difficulty_level.dart';
 import '../models/game_result.dart';
 import 'number_sequence_engine.dart';
+import '../services/difficulty_storage.dart';
 
 class NumberSequenceScreen extends StatefulWidget {
   const NumberSequenceScreen({
@@ -40,7 +41,12 @@ class _NumberSequenceScreenState
       totalSeconds: 60,
     );
 
-    _startPreview();
+    _loadDifficultyAndStart();
+  }
+
+  Future<void> _loadDifficultyAndStart() async {
+    _engine.setDifficulty(await DifficultyStorage.load('number_sequence'));
+    if (mounted) _startPreview();
   }
 
   @override
@@ -169,6 +175,11 @@ class _NumberSequenceScreenState
     _engine.calculateNextDifficulty();
 
     final result = _engine.createResult();
+
+    await DifficultyStorage.save(
+      result.gameId,
+      result.nextDifficulty ?? result.difficulty,
+    );
 
     await _saveResult(result);
 
@@ -299,12 +310,10 @@ class _NumberSequenceScreenState
                 '${_engine.performance.toStringAsFixed(0)}/100',
               ),
 
+              Text('Completed at: ${_difficultyName(result.difficulty)}'),
               Text(
-                'Next Difficulty: '
-                '${_difficultyName(
-                  result.nextDifficulty ??
-                      result.difficulty,
-                )}',
+                'Continue at: '
+                '${_difficultyName(result.nextDifficulty ?? result.difficulty)}',
               ),
             ],
           ),

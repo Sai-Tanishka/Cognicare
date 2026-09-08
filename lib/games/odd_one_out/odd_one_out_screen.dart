@@ -6,6 +6,7 @@ import '../core/timer_manager.dart';
 import '../models/difficulty_level.dart';
 import '../models/game_result.dart';
 import 'odd_one_out_engine.dart';
+import '../services/difficulty_storage.dart';
 
 class OddOneOutScreen extends StatefulWidget {
   const OddOneOutScreen({
@@ -34,7 +35,12 @@ class _OddOneOutScreenState
       totalSeconds: 60,
     );
 
-    _startTimer();
+    _loadDifficultyAndStart();
+  }
+
+  Future<void> _loadDifficultyAndStart() async {
+    _engine.setDifficulty(await DifficultyStorage.load('odd_one_out'));
+    if (mounted) _startTimer();
   }
 
   @override
@@ -92,6 +98,11 @@ class _OddOneOutScreenState
 
   Future<void> _saveResult(GameResult result) async {
     try {
+      await DifficultyStorage.save(
+        result.gameId,
+        result.nextDifficulty ?? result.difficulty,
+      );
+
       await GameRepository.saveGameResult(result);
 
       debugPrint(
@@ -202,12 +213,10 @@ class _OddOneOutScreenState
                 '${_engine.performance.toStringAsFixed(0)}/100',
               ),
 
+              Text('Completed at: ${_difficultyName(result.difficulty)}'),
               Text(
-                'Next Difficulty: '
-                '${_difficultyName(
-                  result.nextDifficulty ??
-                      result.difficulty,
-                )}',
+                'Continue at: '
+                '${_difficultyName(result.nextDifficulty ?? result.difficulty)}',
               ),
             ],
           ),

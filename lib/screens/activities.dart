@@ -4,9 +4,47 @@ import '../games/memory_match/memory_match_screen.dart';
 import '../games/pattern_recall/pattern_recall_screen.dart';
 import '../games/odd_one_out/odd_one_out_screen.dart';
 import '../games/number_sequence/number_sequence_screen.dart';
+import '../database/local_database.dart';
 
-class ActivitiesPage extends StatelessWidget {
+class ActivitiesPage extends StatefulWidget {
   const ActivitiesPage({super.key});
+
+  @override
+  State<ActivitiesPage> createState() => _ActivitiesPageState();
+}
+
+class _ActivitiesPageState extends State<ActivitiesPage> {
+  Map<String, int> _progressByGame = {};
+  int _completedToday = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProgress();
+  }
+
+  Future<void> _loadProgress() async {
+    final attempts = await LocalDatabase.getAllGameAttempts();
+    final progress = <String, int>{};
+    for (final attempt in attempts) {
+      final gameId = attempt['game_id'] as String;
+      final current = progress[gameId] ?? 0;
+      progress[gameId] = current < 100 ? (current + 20).clamp(0, 100) : 100;
+    }
+
+    final today = DateTime.now();
+    final completedToday = attempts.where((attempt) {
+      final value = attempt['completed_at'] as String?;
+      final date = value == null ? null : DateTime.tryParse(value);
+      return date != null && date.year == today.year && date.month == today.month && date.day == today.day;
+    }).length;
+
+    if (!mounted) return;
+    setState(() {
+      _progressByGame = progress;
+      _completedToday = completedToday;
+    });
+  }
 
   static const List<Map<String, dynamic>> games = [
     {
@@ -14,32 +52,28 @@ class ActivitiesPage extends StatelessWidget {
       'description': 'Match the cards and test your memory.',
       'icon': Icons.grid_view_rounded,
       'difficulty': 'Easy',
-      'progress': 75,
-      'status': 'Good Progress',
+        'gameId': 'memory_match',
     },
     {
       'title': 'Pattern Recall',
       'description': 'Remember the pattern and find it again.',
       'icon': Icons.pattern_rounded,
       'difficulty': 'Medium',
-      'progress': 60,
-      'status': 'Improving',
+      'gameId': 'pattern_recall',
     },
     {
       'title': 'Number Sequence',
       'description': 'Find the missing number in the sequence.',
       'icon': Icons.format_list_numbered_rounded,
       'difficulty': 'Medium',
-      'progress': 45,
-      'status': 'Keep Practicing',
+      'gameId': 'number_sequence',
     },
     {
       'title': 'Odd One Out',
       'description': 'Find the item that is different.',
       'icon': Icons.visibility_outlined,
       'difficulty': 'Easy',
-      'progress': 80,
-      'status': 'Good Progress',
+      'gameId': 'odd_one_out',
     },
   ];
 
@@ -68,7 +102,7 @@ class ActivitiesPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+                Text(
                 "Let's Play!",
                 style: TextStyle(
                   fontSize: 27,
@@ -146,7 +180,7 @@ class ActivitiesPage extends StatelessWidget {
 
           const SizedBox(width: 15),
 
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -160,15 +194,15 @@ class ActivitiesPage extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 Text(
-                  '3 games completed today',
+                  '$_completedToday games completed today',
                   style: TextStyle(fontSize: 13, color: Colors.grey),
                 ),
               ],
             ),
           ),
 
-          const Text(
-            '3 / 5',
+          Text(
+            '$_completedToday / 5',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -181,7 +215,14 @@ class ActivitiesPage extends StatelessWidget {
   }
 
   Widget _buildGameCard(BuildContext context, Map<String, dynamic> game) {
-    final int progress = game['progress'] as int;
+    final int progress = _progressByGame[game['gameId']] ?? 0;
+    final status = progress == 0
+      ? 'Not started'
+      : progress < 60
+        ? 'Keep Practicing'
+        : progress < 100
+          ? 'Improving'
+          : 'Good Progress';
 
     return Container(
       width: double.infinity,
@@ -268,7 +309,7 @@ class ActivitiesPage extends StatelessWidget {
                         const SizedBox(width: 8),
 
                         Text(
-                          game['status'] as String,
+                          status,
                           style: const TextStyle(
                             fontSize: 11,
                             color: Colors.grey,

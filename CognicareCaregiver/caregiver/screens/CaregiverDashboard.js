@@ -12,8 +12,9 @@ import {
   calculateReport,
 } from "../data/patientData";
 
-export default function CaregiverDashboard({ onNavigate }) {
+export default function CaregiverDashboard({ onNavigate, selectedPatient }) {
   const report = calculateReport();
+  const displayedPatient = selectedPatient || patient;
 
   return (
     <View style={styles.screen}>
@@ -22,19 +23,19 @@ export default function CaregiverDashboard({ onNavigate }) {
         contentContainerStyle={styles.content}
       >
         <Header
-          title={`Hello, ${patient.caregiverName}!`}
-          subtitle={`Here's how ${patient.name} is doing today.`}
+          title={`Hello, ${displayedPatient.caregiverName}!`}
+          subtitle={`Here's how ${displayedPatient.name} is doing today.`}
         />
 
         <View style={styles.patientCard}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{patient.name.charAt(0)}</Text>
+            <Text style={styles.avatarText}>{displayedPatient.name.charAt(0)}</Text>
           </View>
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.patientName}>{patient.name}</Text>
+            <Text style={styles.patientName}>{displayedPatient.name}</Text>
             <Text style={styles.patientInfo}>
-              {patient.age} years • {patient.gender}
+              {displayedPatient.age} years • {displayedPatient.gender}
             </Text>
             <Text style={styles.active}>● {patient.lastActive}</Text>
           </View>

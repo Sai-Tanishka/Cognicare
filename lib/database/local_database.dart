@@ -141,8 +141,8 @@ class LocalDatabase {
 
     return await db.query(
       'sync_queue',
-      where: 'status = ?',
-      whereArgs: ['Pending'],
+      where: 'status IN (?, ?) AND retry_count < ?',
+      whereArgs: ['Pending', 'Failed', 5],
       orderBy: 'created_at ASC',
     );
   }
@@ -164,6 +164,11 @@ class LocalDatabase {
     }
 
     return results.first;
+  }
+
+  static Future<List<Map<String, dynamic>>> getAllGameAttempts() async {
+    final db = await database;
+    return db.query('game_attempts', orderBy: 'completed_at DESC');
   }
 
   static Future<void> updateNextDifficulty(

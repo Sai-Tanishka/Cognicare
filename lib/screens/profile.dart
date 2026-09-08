@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../main.dart';
+import '../services/auth_storage.dart';
+
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
@@ -151,6 +154,14 @@ class ProfilePage extends StatelessWidget {
                 icon: Icons.cake_outlined,
                 title: 'Age',
                 value: '$age years',
+              ),
+
+              const SizedBox(height: 12),
+
+              _infoCard(
+                icon: Icons.volunteer_activism_outlined,
+                title: 'Caregiver',
+                value: 'Ananya Rao\nPrimary caregiver',
               ),
 
               const SizedBox(height: 25),
@@ -712,11 +723,7 @@ class ProfilePage extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-
-                _showMessage(
-                  context,
-                  'Logout will be connected to authentication later.',
-                );
+                _logout(context);
               },
 
               child: const Text(
@@ -727,6 +734,20 @@ class ProfilePage extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await AuthStorage.clearPatientSession();
+
+    if (!context.mounted) {
+      return;
+    }
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const RoleSelectionPage()),
+      (_) => false,
     );
   }
 }

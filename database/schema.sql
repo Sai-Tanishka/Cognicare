@@ -13,6 +13,8 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE patients (
     patient_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
     date_of_birth DATE,
     gender VARCHAR(20),
     preferred_language VARCHAR(50),
@@ -28,6 +30,8 @@ CREATE TABLE caregivers (
     caregiver_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    preferred_language VARCHAR(20) NOT NULL DEFAULT 'en',
     phone VARCHAR(20),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

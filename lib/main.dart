@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 
 import 'screens/login.dart';
+import 'services/caregiver_launcher.dart';
 
 void main() {
   runApp(const CognicareApp());
 }
 
-class CognicareApp extends StatelessWidget {
+class CognicareApp extends StatefulWidget {
   const CognicareApp({super.key});
 
+  @override
+  State<CognicareApp> createState() => _CognicareAppState();
+}
+
+class _CognicareAppState extends State<CognicareApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -26,12 +32,22 @@ class CognicareApp extends StatelessWidget {
 class RoleSelectionPage extends StatelessWidget {
   const RoleSelectionPage({super.key});
 
-  void openCaretakerApp(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Caretaker app will be connected here.')),
-    );
+  Future<void> openCaretakerApp(BuildContext context) async {
+    final opened = await openCaregiverDashboard();
 
-    // TODO: Connect friend's React Caretaker app later.
+    if (opened) {
+      return;
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Start the caregiver dashboard before opening it.'),
+      ),
+    );
   }
 
   @override
@@ -95,7 +111,7 @@ class RoleSelectionPage extends StatelessWidget {
                 const SizedBox(height: 18),
                 _RoleCard(
                   icon: Icons.people_alt_rounded,
-                  title: 'Caretaker',
+                  title: 'Caregiver',
                   subtitle: 'Monitor and manage patient care',
                   onTap: () {
                     openCaretakerApp(context);

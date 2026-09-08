@@ -1,9 +1,10 @@
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { patient, memoryItems } from "../data/patientData";
 
-export default function PatientProfileScreen() {
+export default function PatientProfileScreen({ onLogout, selectedPatient }) {
+  const displayedPatient = selectedPatient || patient;
   return (
     <View style={styles.screen}>
       <ScrollView
@@ -17,20 +18,20 @@ export default function PatientProfileScreen() {
 
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{patient.name.charAt(0)}</Text>
+            <Text style={styles.avatarText}>{displayedPatient.name.charAt(0)}</Text>
           </View>
-          <Text style={styles.name}>{patient.name}</Text>
+          <Text style={styles.name}>{displayedPatient.name}</Text>
           <Text style={styles.info}>
-            {patient.age} years • {patient.gender}
+            {displayedPatient.age} years • {displayedPatient.gender}
           </Text>
           <Text style={styles.active}>● Active today</Text>
         </View>
 
         <Text style={styles.section}>Care Information</Text>
 
-        <InfoRow label="Preferred language" value={patient.preferredLanguage} />
-        <InfoRow label="Caregiver" value={patient.caregiverName} />
-        <InfoRow label="Interaction mode" value={patient.careMode} />
+        <InfoRow label="Preferred language" value={displayedPatient.preferredLanguage} />
+        <InfoRow label="Caregiver" value={displayedPatient.caregiverName} />
+        <InfoRow label="Interaction mode" value={displayedPatient.careMode} />
 
         <Text style={styles.section}>Memory Assistance</Text>
 
@@ -58,6 +59,10 @@ export default function PatientProfileScreen() {
             dashboard is used to review the resulting activity and care data.
           </Text>
         </View>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -105,4 +110,6 @@ const styles = {
   voiceCard: { backgroundColor: "#E7F1F7", borderRadius: 17, padding: 15, marginTop: 12 },
   voiceTitle: { fontSize: 12, color: "#17352F", fontWeight: "900" },
   voiceText: { fontSize: 9, color: "#6E7D79", lineHeight: 16, marginTop: 5 },
+  logoutButton: { borderWidth: 1, borderColor: "#B64747", borderRadius: 14, paddingVertical: 14, alignItems: "center", marginTop: 24 },
+  logoutText: { color: "#B64747", fontSize: 15, fontWeight: "800" },
 };

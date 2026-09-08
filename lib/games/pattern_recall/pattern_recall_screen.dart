@@ -8,6 +8,7 @@ import '../core/timer_manager.dart';
 import '../models/difficulty_level.dart';
 import '../models/game_result.dart';
 import 'pattern_recall_engine.dart';
+import '../services/difficulty_storage.dart';
 
 class PatternRecallScreen extends StatefulWidget {
   const PatternRecallScreen({
@@ -41,7 +42,12 @@ class _PatternRecallScreenState
       totalSeconds: 60,
     );
 
-    _startPreview();
+    _loadDifficultyAndStart();
+  }
+
+  Future<void> _loadDifficultyAndStart() async {
+    _engine.setDifficulty(await DifficultyStorage.load('pattern_recall'));
+    if (mounted) _startPreview();
   }
 
   @override
@@ -156,6 +162,11 @@ class _PatternRecallScreenState
     _engine.calculateNextDifficulty();
 
     final result = _engine.createResult();
+
+    await DifficultyStorage.save(
+      result.gameId,
+      result.nextDifficulty ?? result.difficulty,
+    );
 
     await _saveResult(result);
 
@@ -272,8 +283,9 @@ class _PatternRecallScreenState
                 '${_engine.performance.toStringAsFixed(0)}/100',
               ),
 
+              Text('Completed at: ${result.difficulty.name}'),
               Text(
-                'Next Difficulty: '
+                'Continue at: '
                 '${result.nextDifficulty?.name ?? result.difficulty.name}',
               ),
             ],

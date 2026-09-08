@@ -26,6 +26,20 @@ export const patient = {
   lastActive: "Today, 10:42 AM",
 };
 
+export const patients = [
+  patient,
+  {
+    id: "P002",
+    name: "Ravi Kumar",
+    age: 76,
+    gender: "Male",
+    preferredLanguage: "English",
+    caregiverName: "Ananya",
+    careMode: "Gaming + Voice Assistance",
+    lastActive: "Yesterday, 6:15 PM",
+  },
+];
+
 export const games = [
   {
     id: "G001",

@@ -7,6 +7,7 @@ import '../core/timer_manager.dart';
 import '../models/difficulty_level.dart';
 import '../models/game_result.dart';
 import 'memory_match_engine.dart';
+import '../services/difficulty_storage.dart';
 
 class MemoryMatchScreen extends StatefulWidget {
   const MemoryMatchScreen({super.key});
@@ -31,15 +32,19 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
   void initState() {
     super.initState();
 
-    _engine = MemoryMatchEngine(
-      difficulty: DifficultyLevel.easy,
-    );
+    _engine = MemoryMatchEngine(difficulty: DifficultyLevel.easy);
 
     _timerManager = TimerManager(
       totalSeconds: 60,
     );
 
-    _startPreview();
+    _loadDifficultyAndStart();
+  }
+
+  Future<void> _loadDifficultyAndStart() async {
+    _engine.difficulty = await DifficultyStorage.load('memory_match');
+    _engine.pairsCount = MemoryMatchEngine.pairsForDifficulty(_engine.difficulty);
+    if (mounted) _startPreview();
   }
 
   void _startTimer() {
@@ -176,8 +181,9 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
                 '${result.averageResponseTime.toStringAsFixed(1)}s',
               ),
               const SizedBox(height: 8),
+              Text('Completed at: ${result.difficulty.name}'),
               Text(
-                'Next Difficulty: '
+                'Continue at: '
                 '${result.nextDifficulty?.name ?? result.difficulty.name}',
               ),
             ],
@@ -249,7 +255,7 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
     setState(() {});
   }
 
-  void _checkSelectedPair() {
+  Future<void> _checkSelectedPair() async {
     _engine.isCheckingPair = true;
 
     final isMatch = _engine.checkMatch();
@@ -264,6 +270,10 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
 
         final result = _engine.createResult();
 
+        await DifficultyStorage.save(
+          result.gameId,
+          result.nextDifficulty ?? result.difficulty,
+        );
         _saveResult(result);
 
         _showGameCompletedDialog(result);

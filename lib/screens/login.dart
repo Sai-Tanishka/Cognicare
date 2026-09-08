@@ -4,6 +4,8 @@ import '../main.dart';
 import 'home.dart';
 import 'signup.dart';
 import 'forgot_password.dart';
+import '../services/auth_storage.dart';
+import '../services/people_api.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,17 +29,36 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void login() {
+  Future<void> login() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Dummy login for now.
-    // Backend authentication will be connected later.
+    try {
+      await PeopleApi.loginPatient(
+        emailController.text.trim(),
+        passwordController.text,
+      );
+      await AuthStorage.setPatientLoggedIn();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
 
-    Navigator.push(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+      );
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const PatientHomePage()),
+      (_) => false,
     );
   }
 
