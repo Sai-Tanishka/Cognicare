@@ -2,13 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../repositories/game_repository.dart';
 import '../core/timer_manager.dart';
-
 import '../models/difficulty_level.dart';
-
-import 'memory_match_engine.dart';
-
 import '../models/game_result.dart';
+import 'memory_match_engine.dart';
 
 class MemoryMatchScreen extends StatefulWidget {
   const MemoryMatchScreen({super.key});
@@ -97,11 +95,10 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
       _previewSecondsRemaining = 0;
     });
 
-    // Start the actual 60-second game timer.
     _startTimer();
   }
 
-  void _handleTimeUp() {
+  Future<void> _handleTimeUp() async {
     if (!mounted || _engine.isGameComplete) {
       return;
     }
@@ -115,9 +112,28 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
 
     final result = _engine.createTimedOutResult();
 
+    await _saveResult(result);
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {});
 
     _showTimeUpDialog(result);
+  }
+
+  Future<void> _saveResult(GameResult result) async {
+    try {
+      await GameRepository.saveGameResult(result);
+      debugPrint(
+        'GAME: ${result.gameId} result saved locally.',
+      );
+    } catch (e) {
+      debugPrint(
+        'GAME: Failed to save ${result.gameId} result locally: $e',
+      );
+    }
   }
 
   void _showTimeUpDialog(GameResult result) {
@@ -211,7 +227,6 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
       return;
     }
 
-    // First card selected: start measuring response time.
     if (_engine.firstSelectedIndex == index &&
         _engine.secondSelectedIndex == null) {
       _responseStopwatch
@@ -219,7 +234,6 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
         ..start();
     }
 
-    // Second card selected: stop measuring response time.
     if (_engine.secondSelectedIndex != null) {
       _responseStopwatch.stop();
 
@@ -241,7 +255,6 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
     final isMatch = _engine.checkMatch();
 
     if (isMatch) {
-      // Matching cards remain visible.
       _engine.isCheckingPair = false;
 
       setState(() {});
@@ -251,10 +264,11 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
 
         final result = _engine.createResult();
 
+        _saveResult(result);
+
         _showGameCompletedDialog(result);
       }
     } else {
-      // Give the player time to see the cards before hiding them.
       setState(() {});
 
       _hideCardsTimer = Timer(
@@ -396,7 +410,6 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
 
               const SizedBox(height: 20),
 
-              // Preview instructions
               if (_isPreviewing) ...[
                 const Text(
                   'Remember the cards',

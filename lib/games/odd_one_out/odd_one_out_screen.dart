@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../repositories/game_repository.dart';
+
 import '../core/timer_manager.dart';
 import '../models/difficulty_level.dart';
 import '../models/game_result.dart';
@@ -15,7 +17,8 @@ class OddOneOutScreen extends StatefulWidget {
       _OddOneOutScreenState();
 }
 
-class _OddOneOutScreenState extends State<OddOneOutScreen> {
+class _OddOneOutScreenState
+    extends State<OddOneOutScreen> {
   late OddOneOutEngine _engine;
   late TimerManager _timerManager;
 
@@ -36,6 +39,7 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
 
   @override
   void dispose() {
+    _timerManager.dispose();
     super.dispose();
   }
 
@@ -69,12 +73,38 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
 
     final result = _engine.createResult();
 
+    _saveResultAndShowCompleted(result);
+  }
+
+  Future<void> _saveResultAndShowCompleted(
+    GameResult result,
+  ) async {
+    await _saveResult(result);
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {});
 
     _showGameCompletedDialog(result);
   }
 
-  void _handleTimeUp() {
+  Future<void> _saveResult(GameResult result) async {
+    try {
+      await GameRepository.saveGameResult(result);
+
+      debugPrint(
+        'GAME: ${result.gameId} result saved locally.',
+      );
+    } catch (e) {
+      debugPrint(
+        'GAME: Failed to save ${result.gameId} result locally: $e',
+      );
+    }
+  }
+
+  Future<void> _handleTimeUp() async {
     if (!mounted || _engine.isGameComplete) {
       return;
     }
@@ -82,6 +112,12 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
     _engine.calculateNextDifficulty();
 
     final result = _engine.createTimedOutResult();
+
+    await _saveResult(result);
+
+    if (!mounted) {
+      return;
+    }
 
     setState(() {});
 
@@ -168,7 +204,10 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
 
               Text(
                 'Next Difficulty: '
-                '${_difficultyName(result.nextDifficulty ?? result.difficulty)}',
+                '${_difficultyName(
+                  result.nextDifficulty ??
+                      result.difficulty,
+                )}',
               ),
             ],
           ),
@@ -183,7 +222,8 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
 
             TextButton(
               onPressed: () {
-                final navigator = Navigator.of(context);
+                final navigator =
+                    Navigator.of(context);
 
                 navigator.pop();
 
@@ -247,7 +287,10 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
 
               Text(
                 'Next Difficulty: '
-                '${_difficultyName(result.nextDifficulty ?? result.difficulty)}',
+                '${_difficultyName(
+                  result.nextDifficulty ??
+                      result.difficulty,
+                )}',
               ),
             ],
           ),
@@ -262,7 +305,8 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
 
             TextButton(
               onPressed: () {
-                final navigator = Navigator.of(context);
+                final navigator =
+                    Navigator.of(context);
 
                 navigator.pop();
 
@@ -278,7 +322,9 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
     );
   }
 
-  String _difficultyName(DifficultyLevel difficulty) {
+  String _difficultyName(
+    DifficultyLevel difficulty,
+  ) {
     switch (difficulty) {
       case DifficultyLevel.easy:
         return 'Easy';
@@ -334,62 +380,45 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
     );
   }
 
+  Widget _itemButton(int index) {
+    final bool isOdd = index == _engine.oddIndex;
+
+    return SizedBox(
+      height: 90,
+      child: ElevatedButton(
+        onPressed: () => _onItemTap(index),
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+        child: Text(
+          isOdd
+              ? _engine.oddSymbol
+              : _engine.normalSymbol,
+          style: const TextStyle(
+            fontSize: 36,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildGrid() {
     return GridView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _engine.totalItems,
+      physics:
+          const NeverScrollableScrollPhysics(),
       gridDelegate:
           SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: _engine.gridSize,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        mainAxisSpacing: 14,
+        crossAxisSpacing: 14,
+        childAspectRatio: 1.2,
       ),
+      itemCount: _engine.totalItems,
       itemBuilder: (context, index) {
-        final isSelected =
-            _engine.selectedIndex == index;
-
-        final isOdd =
-            index == _engine.oddIndex;
-
-        final symbol = isOdd
-          ? _engine.oddSymbol
-          : _engine.normalSymbol;
-
-        return GestureDetector(
-          onTap: () => _onItemTap(index),
-          child: AnimatedContainer(
-            duration: const Duration(
-              milliseconds: 200,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              color: isSelected
-                  ? (isOdd
-                      ? Colors.green.shade300
-                      : Colors.red.shade300)
-                  : Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest,
-              border: Border.all(
-                color: Theme.of(context)
-                    .colorScheme
-                    .outline,
-                width: 2,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                symbol,
-                style: TextStyle(
-                  fontSize: _engine.gridSize >= 5
-                      ? 38
-                      : 50,
-                ),
-              ),
-            ),
-          ),
-        );
+        return _itemButton(index);
       },
     );
   }
@@ -427,7 +456,7 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
               const SizedBox(height: 28),
 
               const Text(
-                'Find the odd one out',
+                'Find the Odd One Out',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -435,55 +464,33 @@ class _OddOneOutScreenState extends State<OddOneOutScreen> {
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
 
-              Text(
-                'Look carefully and tap the item '
-                'that is different.',
+              const Text(
+                'Look carefully and choose the item '
+                'that is different from the others.',
                 style: TextStyle(
                   fontSize: 18,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 30),
 
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 650,
-                  ),
-                  child: _buildGrid(),
-                ),
-              ),
+              _buildGrid(),
 
               const SizedBox(height: 24),
 
-              SizedBox(
-                width: double.infinity,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                    horizontal: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest,
-                  ),
-                  child: const Text(
-                    'Take your time and look carefully.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                    ),
-                  ),
+              Text(
+                'Performance: '
+                '${_engine.performance.toStringAsFixed(0)}/100',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
+
+              const SizedBox(height: 20),
             ],
           ),
         ),

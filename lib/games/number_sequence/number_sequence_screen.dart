@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../repositories/game_repository.dart';
 
 import '../core/timer_manager.dart';
 import '../models/difficulty_level.dart';
@@ -140,7 +141,7 @@ class _NumberSequenceScreenState
     setState(() {});
   }
 
-  void _checkSequence() {
+  Future<void> _checkSequence() async {
     if (_isPreviewing) {
       return;
     }
@@ -169,12 +170,18 @@ class _NumberSequenceScreenState
 
     final result = _engine.createResult();
 
+    await _saveResult(result);
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {});
 
     _showGameCompletedDialog(result);
   }
 
-  void _handleTimeUp() {
+  Future<void> _handleTimeUp() async {
     if (!mounted || _engine.isGameComplete) {
       return;
     }
@@ -185,9 +192,29 @@ class _NumberSequenceScreenState
 
     final result = _engine.createTimedOutResult();
 
+    await _saveResult(result);
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {});
 
     _showTimeUpDialog(result);
+  }
+
+  Future<void> _saveResult(GameResult result) async {
+    try {
+      await GameRepository.saveGameResult(result);
+
+      debugPrint(
+        'GAME: ${result.gameId} result saved locally.',
+      );
+    } catch (e) {
+      debugPrint(
+        'GAME: Failed to save ${result.gameId} result locally: $e',
+      );
+    }
   }
 
   void _restartGame() {

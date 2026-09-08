@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:uuid/uuid.dart';
 
 class LocalDatabase {
@@ -15,11 +17,20 @@ class LocalDatabase {
   }
 
   static Future<Database> _initDatabase() async {
-    final databasePath = await getDatabasesPath();
-    final path = join(databasePath, 'cognicare.db');
+    late String databasePath;
+
+    if (kIsWeb) {
+      // Chrome/Web uses the SQLite Web implementation.
+      databaseFactory = databaseFactoryFfiWeb;
+      databasePath = 'cognicare_web.db';
+    } else {
+      // Android/iOS use the normal sqflite implementation.
+      final databasesPath = await getDatabasesPath();
+      databasePath = join(databasesPath, 'cognicare.db');
+    }
 
     return await openDatabase(
-      path,
+      databasePath,
       version: 1,
       onCreate: (db, version) async {
         await db.execute('''

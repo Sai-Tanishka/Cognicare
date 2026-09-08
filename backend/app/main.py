@@ -1,50 +1,44 @@
 from fastapi import FastAPI
-from sqlalchemy import text
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.connection import engine
+from app.database.connection import Base
 from app.routes.game_attempts import router as game_attempts_router
 
-
 app = FastAPI(
-    title="Cognicare API",
-    description="Backend API for the Cognicare cognitive wellness platform",
-    version="1.0.0"
+    title="Cognicare Backend",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Register game attempts API
+Base.metadata.create_all(bind=engine)
+
 app.include_router(game_attempts_router)
 
 
-@app.get("/")
-def root():
-    return {
-        "message": "Welcome to Cognicare API",
-        "status": "running"
-    }
-
-
 @app.get("/health")
-def health_check():
-    return {
-        "status": "healthy"
-    }
+def health():
+    return {"status": "healthy"}
 
 
 @app.get("/db-test")
-def database_test():
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(text("SELECT 1"))
-            value = result.scalar()
+def db_test():
+    from sqlalchemy import text
+    from app.database.connection import SessionLocal
 
+    db = SessionLocal()
+
+    try:
+        result = db.execute(text("SELECT 1"))
         return {
             "database": "connected",
-            "test_result": value
+            "test_result": result.scalar(),
         }
-
-    except Exception as e:
-        return {
-            "database": "connection failed",
-            "error": str(e)
-        }
+    finally:
+        db.close()

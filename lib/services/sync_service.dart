@@ -7,7 +7,15 @@ import 'package:http/http.dart' as http;
 import '../database/local_database.dart';
 
 class SyncService {
- static const String baseUrl = 'http://10.0.2.2:8000';
+  // Android emulator uses 10.0.2.2 to reach the host PC.
+  // Chrome runs directly on the host PC, so it uses 127.0.0.1.
+  static String get baseUrl {
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000';
+    }
+
+    return 'http://10.0.2.2:8000';
+  }
 
   static Future<void> syncPendingEvents() async {
     final hasConnection = await _hasInternetConnection();

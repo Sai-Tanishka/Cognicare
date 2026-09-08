@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../repositories/game_repository.dart';
+
 import '../core/timer_manager.dart';
 import '../models/difficulty_level.dart';
 import '../models/game_result.dart';
@@ -126,7 +128,7 @@ class _PatternRecallScreenState
     setState(() {});
   }
 
-  void _checkPattern() {
+  Future<void> _checkPattern() async {
     if (_isPreviewing) {
       return;
     }
@@ -155,12 +157,32 @@ class _PatternRecallScreenState
 
     final result = _engine.createResult();
 
+    await _saveResult(result);
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {});
 
     _showGameCompletedDialog(result);
   }
 
-  void _handleTimeUp() {
+  Future<void> _saveResult(GameResult result) async {
+    try {
+      await GameRepository.saveGameResult(result);
+
+      debugPrint(
+        'GAME: ${result.gameId} result saved locally.',
+      );
+    } catch (e) {
+      debugPrint(
+        'GAME: Failed to save ${result.gameId} result locally: $e',
+      );
+    }
+  }
+
+  Future<void> _handleTimeUp() async {
     if (!mounted || _engine.isGameComplete) {
       return;
     }
@@ -170,6 +192,12 @@ class _PatternRecallScreenState
     _engine.calculateNextDifficulty();
 
     final result = _engine.createTimedOutResult();
+
+    await _saveResult(result);
+
+    if (!mounted) {
+      return;
+    }
 
     setState(() {});
 
