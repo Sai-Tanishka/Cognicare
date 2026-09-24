@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/language_selector.dart';
 
 class RemindersPage extends StatefulWidget {
   const RemindersPage({super.key});
@@ -72,7 +73,7 @@ class _RemindersPageState extends State<RemindersPage> {
           },
           icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF173B35)),
         ),
-        title: const Text(
+        title: const TrText(
           'Reminders',
           style: TextStyle(
             fontWeight: FontWeight.bold,
@@ -80,6 +81,7 @@ class _RemindersPageState extends State<RemindersPage> {
           ),
         ),
         actions: [
+          const LanguageSelectorButton(),
           IconButton(
             onPressed: _addReminder,
             icon: const Icon(
@@ -98,7 +100,7 @@ class _RemindersPageState extends State<RemindersPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              const Text(
+              const TrText(
                 'Today\'s Reminders',
                 style: TextStyle(
                   fontSize: 28,
@@ -109,7 +111,7 @@ class _RemindersPageState extends State<RemindersPage> {
 
               const SizedBox(height: 8),
 
-              const Text(
+              const TrText(
                 'Stay on track with your daily routine.',
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
@@ -146,7 +148,7 @@ class _RemindersPageState extends State<RemindersPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          const TrText(
                             'Today\'s Progress',
                             style: TextStyle(
                               fontSize: 17,
@@ -157,12 +159,23 @@ class _RemindersPageState extends State<RemindersPage> {
 
                           const SizedBox(height: 5),
 
-                          Text(
-                            '$completedCount of ${_reminders.length} reminders completed',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                '$completedCount of ${_reminders.length} ',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const TrText(
+                                'reminders completed',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -205,7 +218,7 @@ class _RemindersPageState extends State<RemindersPage> {
                     SizedBox(width: 12),
 
                     Expanded(
-                      child: Text(
+                      child: TrText(
                         'Your reminders will help you remember important activities, medicines and daily tasks.',
                         style: TextStyle(
                           fontSize: 14,
@@ -284,7 +297,7 @@ class _RemindersPageState extends State<RemindersPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                TrText(
                   reminder['title'] as String,
                   style: TextStyle(
                     fontSize: 17,
@@ -322,7 +335,7 @@ class _RemindersPageState extends State<RemindersPage> {
                         color: iconBackground,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(
+                      child: TrText(
                         reminder['type'] as String,
                         style: const TextStyle(
                           fontSize: 10,

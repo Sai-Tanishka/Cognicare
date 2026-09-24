@@ -1,8 +1,36 @@
-from sqlalchemy import Column, Integer, Numeric, DateTime
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import text
 
 from app.database.connection import Base
+
+
+class Game(Base):
+    __tablename__ = "games"
+
+    game_id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+    name = Column(String(100), nullable=False)
+    description = Column(String)
+    category = Column(String(50))
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+
+
+class GameSession(Base):
+    __tablename__ = "game_sessions"
+
+    session_id = Column(UUID(as_uuid=True), primary_key=True)
+    patient_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("patients.patient_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    completed_at = Column(DateTime(timezone=True))
 
 
 class GameAttempt(Base):

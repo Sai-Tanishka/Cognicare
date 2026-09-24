@@ -6,7 +6,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
-from app.models.game_attempt import GameAttempt
+from app.models.game_attempt import GameAttempt, GameSession
+from app.models.people import PatientDailyProgress, PatientProgress
 from app.services.adaptation import calculate_next_difficulty
 
 
@@ -81,6 +82,65 @@ def create_game_attempt(
         completed_at=data.completed_at,
         next_difficulty=next_difficulty
     )
+
+    # A mobile client creates session IDs while offline. Record that session
+    # on first sync so the game-attempt foreign key is always valid.
+    if db.get(GameSession, data.session_id) is None:
+        db.add(
+            GameSession(
+                session_id=data.session_id,
+                patient_id=data.patient_id,
+                started_at=data.started_at,
+                completed_at=data.completed_at,
+            )
+        )
+        # GameAttempt has a database FK to this row, but there is no ORM
+        # relationship between the models to determine insert order.
+        db.flush()
+
+    # Upsert daily progress
+    attempt_date = data.started_at.date() if data.started_at else datetime.now().date()
+    daily_prog = db.query(PatientDailyProgress).filter(
+        PatientDailyProgress.patient_id == data.patient_id,
+        PatientDailyProgress.progress_date == attempt_date,
+    ).first()
+
+    if daily_prog is None:
+        target = 10
+        daily_prog = PatientDailyProgress(
+            patient_id=data.patient_id,
+            progress_date=attempt_date,
+            activities_completed=1,
+            daily_goal_target=target,
+            daily_goal_percentage=min(100.0, round((1.0 / target) * 100.0, 1)),
+            average_accuracy=data.accuracy,
+            total_score=data.score,
+            reminders_completed=0,
+            reminders_total=0,
+        )
+        db.add(daily_prog)
+    else:
+        prev_acts = daily_prog.activities_completed
+        new_acts = prev_acts + 1
+        new_daily_avg = ((float(daily_prog.average_accuracy) * prev_acts) + data.accuracy) / new_acts
+        daily_prog.activities_completed = new_acts
+        daily_prog.total_score += data.score
+        daily_prog.average_accuracy = round(new_daily_avg, 2)
+        target = daily_prog.daily_goal_target or 10
+        daily_prog.daily_goal_percentage = min(100.0, round((new_acts / float(target)) * 100.0, 1))
+
+    # Update overall patient progress
+    progress = db.get(PatientProgress, data.patient_id)
+    if progress is not None:
+        completed_activities = progress.activities_completed
+        updated_average_accuracy = (
+            (float(progress.average_accuracy) * completed_activities) + data.accuracy
+        ) / (completed_activities + 1)
+
+        progress.activities_completed = completed_activities + 1
+        progress.total_score += data.score
+        progress.average_accuracy = round(updated_average_accuracy, 2)
+        progress.overall_progress = min(100.0, round(((completed_activities + 1) / 10.0) * 100.0, 1))
 
     # Save to PostgreSQL
     db.add(game_attempt)

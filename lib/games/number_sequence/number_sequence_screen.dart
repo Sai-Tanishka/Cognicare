@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../repositories/game_repository.dart';
+import '../../widgets/language_selector.dart';
 
 import '../core/timer_manager.dart';
 import '../models/difficulty_level.dart';
@@ -255,7 +256,7 @@ class _NumberSequenceScreenState
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: Text(
+          title: TrText(
             wasPerfect
                 ? 'Perfect Sequence! 🎉'
                 : 'Sequence Complete!',
@@ -264,7 +265,7 @@ class _NumberSequenceScreenState
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
+              TrText(
                 wasPerfect
                     ? 'Excellent memory!'
                     : 'Good effort! Keep practicing.',
@@ -273,7 +274,7 @@ class _NumberSequenceScreenState
 
               const SizedBox(height: 20),
 
-              Text(
+              TrText(
                 'Score: ${result.score}',
                 style: const TextStyle(
                   fontSize: 22,
@@ -283,35 +284,35 @@ class _NumberSequenceScreenState
 
               const SizedBox(height: 8),
 
-              Text(
+              TrText(
                 'Correct Positions: '
                 '${result.correctAnswers}/${_engine.sequenceLength}',
               ),
 
-              Text(
+              TrText(
                 'Incorrect Positions: '
                 '${result.incorrectAnswers}',
               ),
 
-              Text(
+              TrText(
                 'Accuracy: '
                 '${result.accuracy.toStringAsFixed(0)}%',
               ),
 
-              Text(
+              TrText(
                 'Response Time: '
                 '${result.averageResponseTime.toStringAsFixed(1)}s',
               ),
 
               const SizedBox(height: 8),
 
-              Text(
+              TrText(
                 'Performance: '
                 '${_engine.performance.toStringAsFixed(0)}/100',
               ),
 
-              Text('Completed at: ${_difficultyName(result.difficulty)}'),
-              Text(
+              TrText('Completed at: ${_difficultyName(result.difficulty)}'),
+              TrText(
                 'Continue at: '
                 '${_difficultyName(result.nextDifficulty ?? result.difficulty)}',
               ),
@@ -323,7 +324,7 @@ class _NumberSequenceScreenState
                 Navigator.pop(context);
                 _startAdaptiveNextGame();
               },
-              child: const Text('Play Again'),
+              child: const TrText('Play Again'),
             ),
 
             TextButton(
@@ -337,7 +338,7 @@ class _NumberSequenceScreenState
                   navigator.pop();
                 }
               },
-              child: const Text('Done'),
+              child: const TrText('Done'),
             ),
           ],
         );
@@ -351,21 +352,21 @@ class _NumberSequenceScreenState
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
+          title: const TrText(
             'Time Up!',
             textAlign: TextAlign.center,
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              const TrText(
                 'Good effort! Your time has ended.',
                 textAlign: TextAlign.center,
               ),
 
               const SizedBox(height: 20),
 
-              Text(
+              TrText(
                 'Score: ${result.score}',
                 style: const TextStyle(
                   fontSize: 22,
@@ -375,29 +376,29 @@ class _NumberSequenceScreenState
 
               const SizedBox(height: 8),
 
-              Text(
+              TrText(
                 'Correct Positions: '
                 '${result.correctAnswers}/${_engine.sequenceLength}',
               ),
 
-              Text(
+              TrText(
                 'Incorrect Positions: '
                 '${result.incorrectAnswers}',
               ),
 
-              Text(
+              TrText(
                 'Accuracy: '
                 '${result.accuracy.toStringAsFixed(0)}%',
               ),
 
-              Text(
+              TrText(
                 'Response Time: '
                 '${result.averageResponseTime.toStringAsFixed(1)}s',
               ),
 
               const SizedBox(height: 8),
 
-              Text(
+              TrText(
                 'Next Difficulty: '
                 '${_difficultyName(
                   result.nextDifficulty ??
@@ -412,7 +413,7 @@ class _NumberSequenceScreenState
                 Navigator.pop(context);
                 _restartGame();
               },
-              child: const Text('Try Again'),
+              child: const TrText('Try Again'),
             ),
 
             TextButton(
@@ -426,7 +427,7 @@ class _NumberSequenceScreenState
                   navigator.pop();
                 }
               },
-              child: const Text('Done'),
+              child: const TrText('Done'),
             ),
           ],
         );
@@ -473,14 +474,14 @@ class _NumberSequenceScreenState
             size: 25,
           ),
           const SizedBox(height: 4),
-          Text(
+          TrText(
             label,
             style: const TextStyle(
               fontSize: 13,
             ),
           ),
           const SizedBox(height: 2),
-          Text(
+          TrText(
             value,
             style: const TextStyle(
               fontSize: 20,
@@ -515,7 +516,7 @@ class _NumberSequenceScreenState
       ),
       child: Column(
         children: [
-          Text(
+          TrText(
             _isPreviewing
                 ? 'Remember this sequence'
                 : 'Your sequence',
@@ -538,7 +539,7 @@ class _NumberSequenceScreenState
                   ),
                 )
               else if (entered.isEmpty)
-                const Text(
+                const TrText(
                   'Tap the numbers below',
                   style: TextStyle(
                     fontSize: 18,
@@ -663,7 +664,11 @@ class _NumberSequenceScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Number Sequence'),
+        title: const TrText('Number Sequence'),
+        actions: const [
+          LanguageSelectorButton(compact: true),
+          SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -693,7 +698,7 @@ class _NumberSequenceScreenState
               const SizedBox(height: 24),
 
               if (_isPreviewing) ...[
-                const Text(
+                const TrText(
                   'Remember the sequence',
                   style: TextStyle(
                     fontSize: 28,
@@ -704,7 +709,7 @@ class _NumberSequenceScreenState
 
                 const SizedBox(height: 8),
 
-                const Text(
+                const TrText(
                   'Remember the numbers in the '
                   'exact order shown.',
                   style: TextStyle(
@@ -715,7 +720,7 @@ class _NumberSequenceScreenState
 
                 const SizedBox(height: 10),
 
-                Text(
+                TrText(
                   'Hiding in $_previewSecondsRemaining seconds',
                   style: const TextStyle(
                     fontSize: 18,
@@ -723,7 +728,7 @@ class _NumberSequenceScreenState
                   ),
                 ),
               ] else ...[
-                const Text(
+                const TrText(
                   'Recreate the sequence',
                   style: TextStyle(
                     fontSize: 28,
@@ -734,7 +739,7 @@ class _NumberSequenceScreenState
 
                 const SizedBox(height: 8),
 
-                const Text(
+                const TrText(
                   'Tap the numbers in the same order, '
                   'then press ✓.',
                   style: TextStyle(
@@ -761,7 +766,7 @@ class _NumberSequenceScreenState
                         vertical: 18,
                       ),
                     ),
-                    child: const Text(
+                    child: const TrText(
                       "I'm Ready",
                       style: TextStyle(
                         fontSize: 20,
@@ -785,7 +790,7 @@ class _NumberSequenceScreenState
                         vertical: 18,
                       ),
                     ),
-                    child: const Text(
+                    child: const TrText(
                       'Check Sequence',
                       style: TextStyle(
                         fontSize: 20,

@@ -1,4 +1,8 @@
--- Enable UUID generation
+-- =========================================================
+-- COGNICARE DATABASE SCHEMA
+-- PostgreSQL 18
+-- =========================================================
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 
@@ -14,8 +18,67 @@ CREATE TABLE patients (
     date_of_birth DATE,
     gender VARCHAR(20),
     preferred_language VARCHAR(50),
+    phone VARCHAR(20),
+    age INTEGER,
+    diagnosis VARCHAR(100),
+    severity VARCHAR(50),
+    doctor_name VARCHAR(100),
+    doctor_contact VARCHAR(50),
+    doctor_credentials VARCHAR(100),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+
+-- =========================================================
+-- 1A. PATIENT PROGRESS
+-- Every patient begins with an empty (zero) progress summary.
+-- =========================================================
+
+CREATE TABLE patient_progress (
+    patient_id UUID PRIMARY KEY,
+    overall_progress DECIMAL(5,2) NOT NULL DEFAULT 0,
+    activities_completed INTEGER NOT NULL DEFAULT 0,
+    total_score INTEGER NOT NULL DEFAULT 0,
+    average_accuracy DECIMAL(5,2) NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_progress_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE CASCADE
+);
+
+
+-- =========================================================
+-- 1B. PATIENT DAILY PROGRESS
+-- Tracks day-by-day activity completion, daily goal, and accuracy.
+-- =========================================================
+
+CREATE TABLE patient_daily_progress (
+    daily_progress_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL,
+    progress_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    activities_completed INTEGER NOT NULL DEFAULT 0,
+    daily_goal_target INTEGER NOT NULL DEFAULT 10,
+    daily_goal_percentage DECIMAL(5,2) NOT NULL DEFAULT 0,
+    average_accuracy DECIMAL(5,2) NOT NULL DEFAULT 0,
+    total_score INTEGER NOT NULL DEFAULT 0,
+    reminders_completed INTEGER NOT NULL DEFAULT 0,
+    reminders_total INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_daily_progress_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT unique_patient_date
+        UNIQUE (patient_id, progress_date)
+);
+
+CREATE INDEX idx_daily_progress_patient_date
+    ON patient_daily_progress(patient_id, progress_date);
+
 
 
 -- =========================================================
@@ -74,43 +137,6 @@ CREATE TABLE games (
 
 
 -- =========================================================
--- SEED COGNITIVE GAMES
--- =========================================================
-
-INSERT INTO games (
-    game_id,
-    name,
-    description,
-    category
-)
-VALUES
-(
-    '6a2e63ce-3e84-4583-90d1-4373ddde79fb',
-    'Memory Match',
-    'Test cognitive memory and matching ability.',
-    'Memory'
-),
-(
-    '7e99bd7e-d0cb-480e-a9db-8f548b78692d',
-    'Pattern Recall',
-    'Test visual pattern memory and recall.',
-    'Memory'
-),
-(
-    '389ae015-4d44-425c-a285-c360ab001983',
-    'Odd One Out',
-    'Test attention and visual recognition.',
-    'Attention'
-),
-(
-    '310f6d9d-bc51-44a8-b282-6722742bad58',
-    'Number Sequence',
-    'Test memory, concentration, and numerical sequence recall.',
-    'Memory'
-);
-
-
--- =========================================================
 -- 5. GAME SESSIONS
 -- =========================================================
 
@@ -133,7 +159,6 @@ CREATE TABLE game_sessions (
 
 CREATE TABLE game_attempts (
     attempt_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    event_id UUID NOT NULL UNIQUE,
     patient_id UUID NOT NULL,
     session_id UUID NOT NULL,
     game_id UUID NOT NULL,
@@ -179,7 +204,6 @@ CREATE TABLE game_attempts (
 
 CREATE TABLE reminders (
     reminder_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
     patient_id UUID NOT NULL,
 
     reminder_type VARCHAR(50) NOT NULL,
@@ -204,7 +228,6 @@ CREATE TABLE reminders (
 
 CREATE TABLE reminder_events (
     reminder_event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
     reminder_id UUID NOT NULL,
 
     event_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -223,7 +246,6 @@ CREATE TABLE reminder_events (
 
 CREATE TABLE sync_events (
     sync_event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
     patient_id UUID NOT NULL,
 
     event_type VARCHAR(50) NOT NULL,

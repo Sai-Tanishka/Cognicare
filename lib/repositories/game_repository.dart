@@ -1,24 +1,36 @@
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 
 import '../database/local_database.dart';
 import '../games/models/game_result.dart';
 import '../services/sync_service.dart';
+import '../services/auth_storage.dart';
+import '../services/progress_events.dart';
 
 class GameRepository {
-  // Temporary prototype patient/session context.
-  // Replace these with real logged-in patient/session IDs later.
-  static const String patientId =
-      'dc881c50-c49b-4545-9ef6-c424ac2785d0';
-
-  static const String sessionId =
-      'c524d076-bc3a-4a5c-ad2a-94d62a5eff78';
+  static const _gameIds = {
+    'memory_match': '6a2e63ce-3e84-4583-90d1-4373ddde79fb',
+    'pattern_recall': '7e99bd7e-d0cb-480e-a9db-8f548b78692d',
+    'odd_one_out': '389ae015-4d44-425c-a285-c360ab001983',
+    'number_sequence': '310f6d9d-bc51-44a8-b282-6722742bad58',
+  };
 
   static Future<void> saveGameResult(GameResult result) async {
+    final patientId = await AuthStorage.getPatientId();
+    if (patientId == null) {
+      throw StateError('Please log in before saving a game result.');
+    }
+
+    final gameId = _gameIds[result.gameId];
+    if (gameId == null) {
+      throw StateError('Unsupported game: ${result.gameId}.');
+    }
+
     // 1. Always save locally first.
     await LocalDatabase.saveGameAttempt(
       patientId: patientId,
-      sessionId: sessionId,
-      gameId: result.gameId,
+      sessionId: const Uuid().v4(),
+      gameId: gameId,
       difficulty: result.difficultyValue,
       score: result.score.toDouble(),
       accuracy: result.accuracy,
@@ -38,12 +50,22 @@ class GameRepository {
     );
 
     debugPrint(
-      'REPOSITORY: ${result.gameId} saved to local database.',
+      'REPOSITORY: $gameId saved to local database.',
     );
+
+    // Notify UI immediately (zero latency)
+    ProgressEvents.instance.notifyGameCompleted();
 
     // 2. Try to sync immediately.
     // If there is no internet/backend connection,
     // the event remains Pending in the local sync queue.
-    await SyncService.syncPendingEvents();
+    try {
+      await SyncService.syncPendingEvents();
+    } catch (e) {
+      debugPrint('REPOSITORY: Immediate sync attempt failed: $e');
+    }
+
+    // Notify UI again after server sync finishes
+    ProgressEvents.instance.notifyGameCompleted();
   }
 }

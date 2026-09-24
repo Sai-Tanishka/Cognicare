@@ -18,8 +18,67 @@ CREATE TABLE patients (
     date_of_birth DATE,
     gender VARCHAR(20),
     preferred_language VARCHAR(50),
+    phone VARCHAR(20),
+    age INTEGER,
+    diagnosis VARCHAR(100),
+    severity VARCHAR(50),
+    doctor_name VARCHAR(100),
+    doctor_contact VARCHAR(50),
+    doctor_credentials VARCHAR(100),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+
+-- =========================================================
+-- 1A. PATIENT PROGRESS
+-- Every patient begins with an empty (zero) progress summary.
+-- =========================================================
+
+CREATE TABLE patient_progress (
+    patient_id UUID PRIMARY KEY,
+    overall_progress DECIMAL(5,2) NOT NULL DEFAULT 0,
+    activities_completed INTEGER NOT NULL DEFAULT 0,
+    total_score INTEGER NOT NULL DEFAULT 0,
+    average_accuracy DECIMAL(5,2) NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_progress_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE CASCADE
+);
+
+
+-- =========================================================
+-- 1B. PATIENT DAILY PROGRESS
+-- Tracks day-by-day activity completion, daily goal, and accuracy.
+-- =========================================================
+
+CREATE TABLE patient_daily_progress (
+    daily_progress_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL,
+    progress_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    activities_completed INTEGER NOT NULL DEFAULT 0,
+    daily_goal_target INTEGER NOT NULL DEFAULT 10,
+    daily_goal_percentage DECIMAL(5,2) NOT NULL DEFAULT 0,
+    average_accuracy DECIMAL(5,2) NOT NULL DEFAULT 0,
+    total_score INTEGER NOT NULL DEFAULT 0,
+    reminders_completed INTEGER NOT NULL DEFAULT 0,
+    reminders_total INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_daily_progress_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT unique_patient_date
+        UNIQUE (patient_id, progress_date)
+);
+
+CREATE INDEX idx_daily_progress_patient_date
+    ON patient_daily_progress(patient_id, progress_date);
+
 
 
 -- =========================================================

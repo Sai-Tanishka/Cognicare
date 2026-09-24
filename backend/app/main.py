@@ -6,6 +6,7 @@ from app.database.connection import engine
 from app.database.connection import Base
 from app.routes.game_attempts import router as game_attempts_router
 from app.routes.people import router as people_router
+from app.routes.translation import router as translation_router
 
 app = FastAPI(
     title="Cognicare Backend",
@@ -21,6 +22,7 @@ app.add_middleware(
 
 app.include_router(game_attempts_router)
 app.include_router(people_router)
+app.include_router(translation_router)
 
 
 @app.on_event("startup")

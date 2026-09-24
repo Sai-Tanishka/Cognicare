@@ -5,6 +5,8 @@ import '../games/pattern_recall/pattern_recall_screen.dart';
 import '../games/odd_one_out/odd_one_out_screen.dart';
 import '../games/number_sequence/number_sequence_screen.dart';
 import '../database/local_database.dart';
+import '../services/progress_events.dart';
+import '../widgets/language_selector.dart';
 
 class ActivitiesPage extends StatefulWidget {
   const ActivitiesPage({super.key});
@@ -20,7 +22,14 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
   @override
   void initState() {
     super.initState();
+    ProgressEvents.instance.addListener(_loadProgress);
     _loadProgress();
+  }
+
+  @override
+  void dispose() {
+    ProgressEvents.instance.removeListener(_loadProgress);
+    super.dispose();
   }
 
   Future<void> _loadProgress() async {
@@ -52,7 +61,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
       'description': 'Match the cards and test your memory.',
       'icon': Icons.grid_view_rounded,
       'difficulty': 'Easy',
-        'gameId': 'memory_match',
+      'gameId': 'memory_match',
     },
     {
       'title': 'Pattern Recall',
@@ -84,17 +93,22 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F7F2),
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF173B35)),
-        ),
-        title: const Text(
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF173B35)),
+              )
+            : null,
+        title: const TrText(
           'Games',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF173B35),
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -102,7 +116,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                Text(
+              const TrText(
                 "Let's Play!",
                 style: TextStyle(
                   fontSize: 27,
@@ -113,7 +127,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
 
               const SizedBox(height: 7),
 
-              const Text(
+              const TrText(
                 'Choose a game and give your brain a little workout.',
                 style: TextStyle(fontSize: 15, color: Colors.grey, height: 1.4),
               ),
@@ -124,7 +138,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
 
               const SizedBox(height: 28),
 
-              const Text(
+              const TrText(
                 'Choose a Game',
                 style: TextStyle(
                   fontSize: 21,
@@ -184,7 +198,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const TrText(
                   "Today's Progress",
                   style: TextStyle(
                     fontSize: 16,
@@ -192,18 +206,26 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                     color: Color(0xFF173B35),
                   ),
                 ),
-                SizedBox(height: 5),
-                Text(
-                  '$_completedToday games completed today',
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Text(
+                      '$_completedToday ',
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                    const TrText(
+                      'games completed today',
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
 
           Text(
-            '$_completedToday / 5',
-            style: TextStyle(
+            '$_completedToday / 10',
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Color(0xFF376B5C),
@@ -263,7 +285,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TrText(
                       game['title'] as String,
                       style: const TextStyle(
                         fontSize: 17,
@@ -274,7 +296,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
 
                     const SizedBox(height: 5),
 
-                    Text(
+                    TrText(
                       game['description'] as String,
                       style: const TextStyle(
                         fontSize: 13,
@@ -296,7 +318,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                             color: const Color(0xFFE4EFEA),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
+                          child: TrText(
                             game['difficulty'] as String,
                             style: const TextStyle(
                               fontSize: 11,
@@ -308,7 +330,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
 
                         const SizedBox(width: 8),
 
-                        Text(
+                        TrText(
                           status,
                           style: const TextStyle(
                             fontSize: 11,
@@ -327,7 +349,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
 
           Row(
             children: [
-              const Text(
+              const TrText(
                 'Progress',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
@@ -367,7 +389,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
             width: double.infinity,
             height: 45,
             child: ElevatedButton.icon(
-              onPressed: () {
+              onPressed: () async {
                 final gameTitle = game['title'] as String;
 
                 Widget? gameScreen;
@@ -391,16 +413,19 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                 }
 
                 if (gameScreen != null) {
-                  Navigator.push(
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => gameScreen!,
                     ),
                   );
+                  if (mounted) {
+                    _loadProgress();
+                  }
                 }
               },
               icon: const Icon(Icons.play_arrow_rounded, size: 21),
-              label: const Text(
+              label: const TrText(
                 'Start Game',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
@@ -439,7 +464,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
           SizedBox(width: 12),
 
           Expanded(
-            child: Text(
+            child: TrText(
               'Playing regularly can help you stay engaged and practice different cognitive skills.',
               style: TextStyle(
                 fontSize: 13,

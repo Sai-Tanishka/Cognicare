@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'login.dart';
+import '../services/people_api.dart';
+import '../widgets/language_selector.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -23,10 +25,14 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+  final TextEditingController caregiverNameController = TextEditingController();
+  final TextEditingController caregiverEmailController = TextEditingController();
+  final TextEditingController caregiverPhoneController = TextEditingController();
 
   String? diagnosis;
   String? severity;
   String? relationship;
+  String? caregiverRelationship = 'Primary caregiver';
 
   final List<String> symptomOptions = [
     'Memory Loss',
@@ -45,6 +51,7 @@ class _SignUpPageState extends State<SignUpPage> {
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
   bool acceptedTerms = false;
+  bool isSubmitting = false;
 
   String? uploadedDocumentName;
 
@@ -59,6 +66,9 @@ class _SignUpPageState extends State<SignUpPage> {
     doctorCredentialsController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    caregiverNameController.dispose();
+    caregiverEmailController.dispose();
+    caregiverPhoneController.dispose();
     super.dispose();
   }
 
@@ -205,7 +215,7 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  void register() {
+  Future<void> register() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -231,12 +241,48 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    // Dummy registration for now.
-    // Backend/database connection will be added later.
+    setState(() {
+      isSubmitting = true;
+    });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Registration successful!')));
+    try {
+      // The backend creates the patient account and its zeroed progress row
+      // in one database transaction.
+      await PeopleApi.registerPatient(
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text,
+        phone: phoneController.text.trim(),
+        age: int.tryParse(ageController.text.trim()),
+        diagnosis: diagnosis,
+        severity: severity,
+        doctorName: doctorNameController.text.trim(),
+        doctorContact: doctorContactController.text.trim(),
+        doctorCredentials: doctorCredentialsController.text.trim(),
+        caregiverName: caregiverNameController.text.trim(),
+        caregiverEmail: caregiverEmailController.text.trim(),
+        caregiverPhone: caregiverPhoneController.text.trim(),
+        caregiverRelationship: caregiverRelationship,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+      );
+      return;
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSubmitting = false;
+        });
+      }
+    }
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Registration successful! You can now log in.')),
+    );
 
     Future.delayed(const Duration(seconds: 1), () {
       if (!mounted) return;
@@ -268,7 +314,7 @@ class _SignUpPageState extends State<SignUpPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          TrText(
             title,
             style: const TextStyle(
               fontSize: 21,
@@ -277,7 +323,7 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
+          TrText(
             subtitle,
             style: const TextStyle(fontSize: 13, color: Colors.grey),
           ),
@@ -292,7 +338,7 @@ class _SignUpPageState extends State<SignUpPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          TrText(label, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           field,
         ],
@@ -314,13 +360,16 @@ class _SignUpPageState extends State<SignUpPage> {
             Navigator.pop(context);
           },
         ),
-        title: const Text(
+        title: const TrText(
           'Create Account',
           style: TextStyle(
             color: Color(0xFF173B35),
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
 
       body: SafeArea(
@@ -332,7 +381,7 @@ class _SignUpPageState extends State<SignUpPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Center(
-                  child: Text(
+                  child: TrText(
                     'Create your Cognicare account',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -346,7 +395,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 const SizedBox(height: 8),
 
                 const Center(
-                  child: Text(
+                  child: TrText(
                     'Enter patient details to get started.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 14),
@@ -585,6 +634,86 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
 
+                // ---------------- CAREGIVER DETAILS ----------------
+                sectionTitle(
+                  'Connected Caregiver Account',
+                  'Connect the caregiver who monitors and manages your care.',
+                ),
+
+                labeledField(
+                  'Caregiver Name',
+                  TextFormField(
+                    controller: caregiverNameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: fieldDecoration(
+                      'Enter caregiver full name',
+                      icon: Icons.person_outline_rounded,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter caregiver name';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+
+                labeledField(
+                  'Caregiver Email / Account',
+                  TextFormField(
+                    controller: caregiverEmailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: fieldDecoration(
+                      'Enter caregiver email address',
+                      icon: Icons.alternate_email_rounded,
+                    ),
+                    validator: validateEmail,
+                  ),
+                ),
+
+                labeledField(
+                  'Caregiver Phone Number',
+                  TextFormField(
+                    controller: caregiverPhoneController,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    decoration: fieldDecoration(
+                      'Enter 10-digit phone number',
+                      icon: Icons.phone_outlined,
+                    ).copyWith(counterText: ''),
+                  ),
+                ),
+
+                labeledField(
+                  'Relationship with Caregiver',
+                  DropdownButtonFormField<String>(
+                    initialValue: caregiverRelationship,
+                    decoration: fieldDecoration(
+                      'Select relationship',
+                      icon: Icons.volunteer_activism_outlined,
+                    ),
+                    items: const [
+                      'Primary caregiver',
+                      'Spouse',
+                      'Child',
+                      'Sibling',
+                      'Parent',
+                      'Professional Caregiver',
+                      'Other',
+                    ].map((value) {
+                      return DropdownMenuItem(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        caregiverRelationship = value;
+                      });
+                    },
+                  ),
+                ),
+
                 // ---------------- MEDICAL RECORDS ----------------
                 sectionTitle(
                   'Medical Records',
@@ -624,7 +753,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              TrText(
                                 uploadedDocumentName ?? 'Upload Document',
                                 style: const TextStyle(
                                   fontSize: 16,
@@ -633,7 +762,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 ),
                               ),
                               const SizedBox(height: 5),
-                              const Text(
+                              const TrText(
                                 'PDF, JPG or PNG • Optional',
                                 style: TextStyle(
                                   fontSize: 12,
@@ -738,7 +867,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   contentPadding: EdgeInsets.zero,
                   value: acceptedTerms,
                   activeColor: const Color(0xFF376B5C),
-                  title: const Text(
+                  title: const TrText(
                     'I agree to the Terms & Conditions',
                     style: TextStyle(fontSize: 14),
                   ),
@@ -756,7 +885,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: register,
+                    onPressed: isSubmitting ? null : register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF376B5C),
                       foregroundColor: Colors.white,
@@ -764,9 +893,9 @@ class _SignUpPageState extends State<SignUpPage> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      'Create Account',
-                      style: TextStyle(
+                    child: TrText(
+                      isSubmitting ? 'Creating account...' : 'Create Account',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -781,7 +910,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    child: const Text('Already have an account? Log In'),
+                    child: const TrText('Already have an account? Log In'),
                   ),
                 ),
               ],

@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../database/local_database.dart';
+import '../services/auth_storage.dart';
+import '../services/people_api.dart';
+import '../services/progress_events.dart';
+import '../services/translation_service.dart';
+import '../widgets/language_selector.dart';
+
 class ProgressPage extends StatefulWidget {
   const ProgressPage({super.key});
 
@@ -9,10 +16,52 @@ class ProgressPage extends StatefulWidget {
 
 class _ProgressPageState extends State<ProgressPage> {
   bool isWeekly = true;
+  bool isLoading = true;
 
-  // Dummy data for now.
-  // Backend/game data can be connected later.
-  final List<int> weeklyScores = [62, 68, 71, 75, 73, 79, 82];
+  double overallProgress = 0.0;
+  int activitiesCompleted = 0;
+  int activitiesToday = 0;
+  int dailyGoalTarget = 10;
+  double dailyGoalPercentage = 0.0;
+  int totalScore = 0;
+  double averageAccuracy = 0.0;
+  int averageScore = 0;
+  String practiceTime = '0 min';
+
+  double memoryProgress = 0.0;
+  double attentionProgress = 0.0;
+  double problemSolvingProgress = 0.0;
+  double recognitionProgress = 0.0;
+
+  double memoryMatchScore = 0.0;
+  String memoryMatchStatus = 'Not played yet';
+
+  double patternRecallScore = 0.0;
+  String patternRecallStatus = 'Not played yet';
+
+  double oddOneOutScore = 0.0;
+  String oddOneOutStatus = 'Not played yet';
+
+  double numberSequenceScore = 0.0;
+  String numberSequenceStatus = 'Not played yet';
+
+  Map<String, bool> weekStatus = {
+    'Mon': false,
+    'Tue': false,
+    'Wed': false,
+    'Thu': false,
+    'Fri': false,
+    'Sat': false,
+    'Sun': false,
+  };
+
+  int remindersCompleted = 0;
+  int remindersTotal = 0;
+  double reminderPercentage = 0.0;
+
+  Map<String, dynamic>? caregiverInfo;
+
+  List<int> weeklyScores = [0, 0, 0, 0, 0, 0, 0];
 
   final List<String> weeklyDays = [
     'Mon',
@@ -24,7 +73,7 @@ class _ProgressPageState extends State<ProgressPage> {
     'Sun',
   ];
 
-  final List<int> monthlyScores = [58, 62, 65, 67, 70, 68, 73, 76, 79, 82];
+  List<int> monthlyScores = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
   final List<String> monthlyDays = [
     '1',
@@ -40,9 +89,207 @@ class _ProgressPageState extends State<ProgressPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    ProgressEvents.instance.addListener(_loadProgress);
+    TranslationService.instance.addListener(_onLanguageChange);
+    _loadProgress();
+  }
+
+  void _onLanguageChange() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    ProgressEvents.instance.removeListener(_loadProgress);
+    TranslationService.instance.removeListener(_onLanguageChange);
+    super.dispose();
+  }
+
+  Future<void> _loadProgress() async {
+    try {
+      final patientId = await AuthStorage.getPatientId();
+      if (patientId != null) {
+        final dailyData = await PeopleApi.getPatientDailyProgress(patientId);
+        final double op =
+            (dailyData['overall_progress'] as num?)?.toDouble() ?? 0.0;
+        final int ac =
+            (dailyData['total_activities_completed'] as num?)?.toInt() ?? 0;
+        final int actsToday =
+            (dailyData['activities_completed_today'] as num?)?.toInt() ?? 0;
+        final int target =
+            (dailyData['daily_goal_target'] as num?)?.toInt() ?? 10;
+        final double dp =
+            (dailyData['daily_goal_percentage'] as num?)?.toDouble() ?? 0.0;
+        final int ts = (dailyData['total_score'] as num?)?.toInt() ?? 0;
+        final double acc =
+            (dailyData['overall_accuracy'] as num?)?.toDouble() ?? 0.0;
+
+        final rawGames = (dailyData['games_breakdown'] as List?) ?? [];
+        final Map<String, Map<String, dynamic>> gamesMap = {};
+        for (final item in rawGames) {
+          if (item is Map<String, dynamic> && item['name'] != null) {
+            gamesMap[item['name'].toString()] = item;
+          }
+        }
+
+        final rawWeek =
+            (dailyData['week_status'] as Map<String, dynamic>?) ?? {};
+        final Map<String, bool> parsedWeek = {};
+        for (final key in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) {
+          parsedWeek[key] = (rawWeek[key] as bool?) ?? false;
+        }
+
+        final rem =
+            (dailyData['reminder_adherence'] as Map<String, dynamic>?) ?? {};
+        final remComp = (rem['completed'] as num?)?.toInt() ?? 0;
+        final remTot = (rem['total'] as num?)?.toInt() ?? 0;
+        final remPct = (rem['percentage'] as num?)?.toDouble() ?? 0.0;
+
+        final cg = dailyData['caregiver'] as Map<String, dynamic>?;
+
+        // Memory Match
+        final mm = gamesMap['Memory Match'];
+        final mmAttempts = (mm?['attempts'] as num?)?.toInt() ?? 0;
+        final mmAcc = (mm?['average_accuracy'] as num?)?.toDouble() ?? 0.0;
+
+        // Pattern Recall
+        final pr = gamesMap['Pattern Recall'];
+        final prAttempts = (pr?['attempts'] as num?)?.toInt() ?? 0;
+        final prAcc = (pr?['average_accuracy'] as num?)?.toDouble() ?? 0.0;
+
+        // Odd One Out
+        final ooo = gamesMap['Odd One Out'];
+        final oooAttempts = (ooo?['attempts'] as num?)?.toInt() ?? 0;
+        final oooAcc = (ooo?['average_accuracy'] as num?)?.toDouble() ?? 0.0;
+
+        // Number Sequence
+        final ns = gamesMap['Number Sequence'];
+        final nsAttempts = (ns?['attempts'] as num?)?.toInt() ?? 0;
+        final nsAcc = (ns?['average_accuracy'] as num?)?.toDouble() ?? 0.0;
+
+        List<Map<String, dynamic>> attempts = [];
+        try {
+          attempts = await LocalDatabase.getAllGameAttempts();
+        } catch (_) {}
+
+        if (mounted) {
+          setState(() {
+            overallProgress = op / 100.0;
+            activitiesCompleted = ac;
+            activitiesToday = actsToday;
+            dailyGoalTarget = target;
+            dailyGoalPercentage = dp;
+            totalScore = ts;
+            averageAccuracy = acc;
+            averageScore = ac > 0 ? (ts / ac).round() : 0;
+            practiceTime = '${ac * 3} min';
+
+            // Real game performance (0% and 'Not played yet' if not played)
+            memoryMatchScore =
+                mmAttempts > 0 ? (mmAcc / 100.0).clamp(0.0, 1.0) : 0.0;
+            memoryMatchStatus = mmAttempts > 0
+                ? '$mmAttempts ${mmAttempts == 1 ? 'attempt' : 'attempts'}'
+                : 'Not played yet';
+
+            patternRecallScore =
+                prAttempts > 0 ? (prAcc / 100.0).clamp(0.0, 1.0) : 0.0;
+            patternRecallStatus = prAttempts > 0
+                ? '$prAttempts ${prAttempts == 1 ? 'attempt' : 'attempts'}'
+                : 'Not played yet';
+
+            oddOneOutScore =
+                oooAttempts > 0 ? (oooAcc / 100.0).clamp(0.0, 1.0) : 0.0;
+            oddOneOutStatus = oooAttempts > 0
+                ? '$oooAttempts ${oooAttempts == 1 ? 'attempt' : 'attempts'}'
+                : 'Not played yet';
+
+            numberSequenceScore =
+                nsAttempts > 0 ? (nsAcc / 100.0).clamp(0.0, 1.0) : 0.0;
+            numberSequenceStatus = nsAttempts > 0
+                ? '$nsAttempts ${nsAttempts == 1 ? 'attempt' : 'attempts'}'
+                : 'Not played yet';
+
+            // Real Cognitive Skills (0% if none played)
+            int memCount = 0;
+            double memSum = 0;
+            if (mmAttempts > 0) {
+              memSum += mmAcc;
+              memCount++;
+            }
+            if (prAttempts > 0) {
+              memSum += prAcc;
+              memCount++;
+            }
+            memoryProgress =
+                memCount > 0 ? (memSum / memCount / 100.0).clamp(0.0, 1.0) : 0.0;
+
+            attentionProgress =
+                oooAttempts > 0 ? (oooAcc / 100.0).clamp(0.0, 1.0) : 0.0;
+
+            problemSolvingProgress =
+                nsAttempts > 0 ? (nsAcc / 100.0).clamp(0.0, 1.0) : 0.0;
+
+            int recCount = 0;
+            double recSum = 0;
+            if (oooAttempts > 0) {
+              recSum += oooAcc;
+              recCount++;
+            }
+            if (prAttempts > 0) {
+              recSum += prAcc;
+              recCount++;
+            }
+            recognitionProgress =
+                recCount > 0 ? (recSum / recCount / 100.0).clamp(0.0, 1.0) : 0.0;
+
+            weekStatus = parsedWeek;
+            remindersCompleted = remComp;
+            remindersTotal = remTot;
+            reminderPercentage = remPct;
+            caregiverInfo = cg;
+
+            if (attempts.isNotEmpty) {
+              final recent = attempts
+                  .take(7)
+                  .map((e) {
+                    final accVal = (e['accuracy'] as num?)?.toDouble() ?? 0.0;
+                    return accVal.round().clamp(0, 100);
+                  })
+                  .toList();
+              while (recent.length < 7) {
+                recent.insert(0, 0);
+              }
+              weeklyScores = recent;
+            } else if (ac > 0) {
+              final dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+              weeklyScores = dayKeys.map((d) {
+                return (parsedWeek[d] == true) ? acc.round().clamp(0, 100) : 0;
+              }).toList();
+            } else {
+              weeklyScores = [0, 0, 0, 0, 0, 0, 0];
+            }
+          });
+        }
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final tService = TranslationService.instance;
     final scores = isWeekly ? weeklyScores : monthlyScores;
-    final labels = isWeekly ? weeklyDays : monthlyDays;
+    final labels = isWeekly
+        ? weeklyDays.map((d) => tService.getCached(d)).toList()
+        : monthlyDays;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7F2),
@@ -50,13 +297,16 @@ class _ProgressPageState extends State<ProgressPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F7F2),
         elevation: 0,
-        title: const Text(
+        title: const TrText(
           'My Progress',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF173B35),
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
 
       body: SafeArea(
@@ -70,7 +320,7 @@ class _ProgressPageState extends State<ProgressPage> {
               // HEADER
               // ------------------------------------------------
 
-              const Text(
+              const TrText(
                 'Your Progress',
                 style: TextStyle(
                   fontSize: 28,
@@ -81,7 +331,7 @@ class _ProgressPageState extends State<ProgressPage> {
 
               const SizedBox(height: 8),
 
-              const Text(
+              const TrText(
                 'Keep practicing to improve your cognitive skills.',
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
@@ -102,7 +352,7 @@ class _ProgressPageState extends State<ProgressPage> {
 
                 child: Column(
                   children: [
-                    const Text(
+                    const TrText(
                       'Overall Progress',
                       style: TextStyle(
                         fontSize: 18,
@@ -124,35 +374,32 @@ class _ProgressPageState extends State<ProgressPage> {
                           SizedBox(
                             width: 130,
                             height: 130,
-
                             child: CircularProgressIndicator(
-                              value: 0.65,
+                              value: overallProgress.clamp(0.0, 1.0),
                               strokeWidth: 12,
-
                               backgroundColor: Colors.white,
-
                               valueColor: const AlwaysStoppedAnimation<Color>(
                                 Color(0xFF376B5C),
                               ),
                             ),
                           ),
 
-                          const Column(
+                          Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-
                             children: [
                               Text(
-                                '65%',
-                                style: TextStyle(
+                                '${(overallProgress * 100).round()}%',
+                                style: const TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF173B35),
                                 ),
                               ),
-
-                              Text(
-                                'Overall',
-                                style: TextStyle(
+                              TrText(
+                                activitiesCompleted == 0
+                                    ? 'Starting Out'
+                                    : 'Overall',
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey,
                                 ),
@@ -165,21 +412,22 @@ class _ProgressPageState extends State<ProgressPage> {
 
                     const SizedBox(height: 18),
 
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-
                       children: [
                         Icon(
-                          Icons.trending_up_rounded,
-                          color: Color(0xFF376B5C),
+                          activitiesCompleted > 0
+                              ? Icons.trending_up_rounded
+                              : Icons.info_outline_rounded,
+                          color: const Color(0xFF376B5C),
                           size: 20,
                         ),
-
-                        SizedBox(width: 6),
-
-                        Text(
-                          '8% improvement this month',
-                          style: TextStyle(
+                        const SizedBox(width: 6),
+                        TrText(
+                          activitiesCompleted > 0
+                              ? '$activitiesCompleted activities completed'
+                              : 'No activities completed yet',
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF376B5C),
@@ -187,6 +435,96 @@ class _ProgressPageState extends State<ProgressPage> {
                         ),
                       ],
                     ),
+
+                    const SizedBox(height: 18),
+
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const TrText(
+                                "Today's Daily Goal",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF173B35),
+                                ),
+                              ),
+                              Text(
+                                '${dailyGoalPercentage.round()}%',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF376B5C),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: LinearProgressIndicator(
+                              value: (dailyGoalPercentage / 100.0).clamp(0.0, 1.0),
+                              minHeight: 8,
+                              backgroundColor: const Color(0xFFE5E5E5),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                Color(0xFF376B5C),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TrText(
+                            '$activitiesToday of $dailyGoalTarget activities completed today',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    if (caregiverInfo != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD6E8E0),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.health_and_safety_rounded,
+                              size: 18,
+                              color: Color(0xFF376B5C),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TrText(
+                                'Caregiver: ${caregiverInfo!['name']} (${caregiverInfo!['email'] ?? 'Connected'})',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF173B35),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -196,7 +534,7 @@ class _ProgressPageState extends State<ProgressPage> {
               // ------------------------------------------------
               // COGNITIVE SKILLS
               // ------------------------------------------------
-              const Text(
+              const TrText(
                 'Cognitive Skills',
                 style: TextStyle(
                   fontSize: 21,
@@ -207,30 +545,38 @@ class _ProgressPageState extends State<ProgressPage> {
 
               const SizedBox(height: 14),
 
-              _skillCard('Memory', 0.82, Icons.psychology_rounded),
+              _skillCard('Memory', memoryProgress, Icons.psychology_rounded),
 
               const SizedBox(height: 12),
 
-              _skillCard('Attention', 0.74, Icons.center_focus_strong_rounded),
+              _skillCard(
+                'Attention',
+                attentionProgress,
+                Icons.center_focus_strong_rounded,
+              ),
 
               const SizedBox(height: 12),
 
               _skillCard(
                 'Problem Solving',
-                0.68,
+                problemSolvingProgress,
                 Icons.lightbulb_outline_rounded,
               ),
 
               const SizedBox(height: 12),
 
-              _skillCard('Recognition', 0.79, Icons.visibility_rounded),
+              _skillCard(
+                'Recognition',
+                recognitionProgress,
+                Icons.visibility_rounded,
+              ),
 
               const SizedBox(height: 25),
 
               // ------------------------------------------------
               // PROGRESS TREND
               // ------------------------------------------------
-              const Text(
+              const TrText(
                 'Progress Trend',
                 style: TextStyle(
                   fontSize: 21,
@@ -259,7 +605,7 @@ class _ProgressPageState extends State<ProgressPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
 
                             children: [
-                              Text(
+                              TrText(
                                 'Cognitive Performance',
                                 style: TextStyle(
                                   fontSize: 17,
@@ -270,7 +616,7 @@ class _ProgressPageState extends State<ProgressPage> {
 
                               SizedBox(height: 4),
 
-                              Text(
+                              TrText(
                                 'Track your improvement over time',
                                 style: TextStyle(
                                   fontSize: 12,
@@ -330,7 +676,7 @@ class _ProgressPageState extends State<ProgressPage> {
 
                         SizedBox(width: 5),
 
-                        Text(
+                        TrText(
                           'Tap a point to view the score',
                           style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
@@ -345,7 +691,7 @@ class _ProgressPageState extends State<ProgressPage> {
               // ------------------------------------------------
               // ACTIVITY PERFORMANCE
               // ------------------------------------------------
-              const Text(
+              const TrText(
                 'Activity Performance',
                 style: TextStyle(
                   fontSize: 21,
@@ -358,8 +704,8 @@ class _ProgressPageState extends State<ProgressPage> {
 
               _performanceCard(
                 'Memory Match',
-                'Good',
-                0.75,
+                memoryMatchStatus,
+                memoryMatchScore,
                 Icons.psychology_rounded,
                 const Color(0xFFE4EFEA),
               ),
@@ -368,8 +714,8 @@ class _ProgressPageState extends State<ProgressPage> {
 
               _performanceCard(
                 'Pattern Recall',
-                'Improving',
-                0.60,
+                patternRecallStatus,
+                patternRecallScore,
                 Icons.grid_view_rounded,
                 const Color(0xFFE8E4F1),
               ),
@@ -378,8 +724,8 @@ class _ProgressPageState extends State<ProgressPage> {
 
               _performanceCard(
                 'Odd One Out',
-                'Good',
-                0.80,
+                oddOneOutStatus,
+                oddOneOutScore,
                 Icons.visibility_rounded,
                 const Color(0xFFF1E8D8),
               ),
@@ -388,8 +734,8 @@ class _ProgressPageState extends State<ProgressPage> {
 
               _performanceCard(
                 'Number Sequence',
-                'Keep Practicing',
-                0.45,
+                numberSequenceStatus,
+                numberSequenceScore,
                 Icons.pin_rounded,
                 const Color(0xFFE5E9F0),
               ),
@@ -399,7 +745,7 @@ class _ProgressPageState extends State<ProgressPage> {
               // ------------------------------------------------
               // ACTIVITY STATISTICS
               // ------------------------------------------------
-              const Text(
+              const TrText(
                 'Activity Statistics',
                 style: TextStyle(
                   fontSize: 21,
@@ -415,7 +761,7 @@ class _ProgressPageState extends State<ProgressPage> {
                   Expanded(
                     child: _statCard(
                       Icons.check_circle_outline_rounded,
-                      '12',
+                      '$activitiesCompleted',
                       'Activities Completed',
                     ),
                   ),
@@ -425,7 +771,7 @@ class _ProgressPageState extends State<ProgressPage> {
                   Expanded(
                     child: _statCard(
                       Icons.track_changes_rounded,
-                      '84%',
+                      '${averageAccuracy.round()}%',
                       'Average Accuracy',
                     ),
                   ),
@@ -439,7 +785,7 @@ class _ProgressPageState extends State<ProgressPage> {
                   Expanded(
                     child: _statCard(
                       Icons.star_outline_rounded,
-                      '78',
+                      '$averageScore',
                       'Average Score',
                     ),
                   ),
@@ -449,7 +795,7 @@ class _ProgressPageState extends State<ProgressPage> {
                   Expanded(
                     child: _statCard(
                       Icons.timer_outlined,
-                      '24 min',
+                      practiceTime,
                       'Practice Time',
                     ),
                   ),
@@ -461,7 +807,7 @@ class _ProgressPageState extends State<ProgressPage> {
               // ------------------------------------------------
               // MOOD TREND
               // ------------------------------------------------
-              const Text(
+              const TrText(
                 'Mood Trend',
                 style: TextStyle(
                   fontSize: 21,
@@ -483,9 +829,8 @@ class _ProgressPageState extends State<ProgressPage> {
 
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
-                    const Text(
+                    const TrText(
                       'How you have been feeling',
                       style: TextStyle(
                         fontSize: 17,
@@ -493,47 +838,23 @@ class _ProgressPageState extends State<ProgressPage> {
                         color: Color(0xFF173B35),
                       ),
                     ),
-
-                    const SizedBox(height: 18),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-
-                      children: [
-                        _moodItem('Mon', '😊', 'Happy'),
-
-                        _moodItem('Tue', '😌', 'Calm'),
-
-                        _moodItem('Wed', '😊', 'Happy'),
-
-                        _moodItem('Thu', '🙂', 'Okay'),
-
-                        _moodItem('Fri', '😌', 'Calm'),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
+                    const SizedBox(height: 14),
                     Container(
-                      padding: const EdgeInsets.all(12),
-
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE4EFEA),
                         borderRadius: BorderRadius.circular(14),
                       ),
-
                       child: const Row(
                         children: [
                           Icon(
                             Icons.favorite_outline_rounded,
                             color: Color(0xFF376B5C),
                           ),
-
                           SizedBox(width: 10),
-
                           Expanded(
-                            child: Text(
-                              'Your mood has been mostly positive this week.',
+                            child: TrText(
+                              'Mood entries will appear here as you log daily feelings and reflections.',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF376B5C),
@@ -552,7 +873,7 @@ class _ProgressPageState extends State<ProgressPage> {
               // ------------------------------------------------
               // REMINDER ADHERENCE
               // ------------------------------------------------
-              const Text(
+              const TrText(
                 'Reminder Adherence',
                 style: TextStyle(
                   fontSize: 21,
@@ -566,12 +887,10 @@ class _ProgressPageState extends State<ProgressPage> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
-
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
-
                 child: Column(
                   children: [
                     Row(
@@ -579,31 +898,26 @@ class _ProgressPageState extends State<ProgressPage> {
                         SizedBox(
                           width: 90,
                           height: 90,
-
                           child: Stack(
                             alignment: Alignment.center,
-
                             children: [
                               SizedBox(
                                 width: 90,
                                 height: 90,
-
                                 child: CircularProgressIndicator(
-                                  value: 0.80,
+                                  value: remindersTotal > 0
+                                      ? (reminderPercentage / 100.0).clamp(0.0, 1.0)
+                                      : 0.0,
                                   strokeWidth: 9,
-
                                   backgroundColor: const Color(0xFFE5E5E5),
-
-                                  valueColor:
-                                      const AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF376B5C),
-                                      ),
+                                  valueColor: const AlwaysStoppedAnimation<Color>(
+                                    Color(0xFF376B5C),
+                                  ),
                                 ),
                               ),
-
-                              const Text(
-                                '80%',
-                                style: TextStyle(
+                              Text(
+                                '${reminderPercentage.round()}%',
+                                style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF173B35),
@@ -612,28 +926,25 @@ class _ProgressPageState extends State<ProgressPage> {
                             ],
                           ),
                         ),
-
                         const SizedBox(width: 20),
-
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-
                             children: [
-                              Text(
-                                'Great consistency!',
-                                style: TextStyle(
+                              TrText(
+                                remindersTotal > 0 ? 'Reminder Adherence' : 'No Reminders Today',
+                                style: const TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF173B35),
                                 ),
                               ),
-
-                              SizedBox(height: 7),
-
-                              Text(
-                                'You completed 16 of 20 reminders this week.',
-                                style: TextStyle(
+                              const SizedBox(height: 7),
+                              TrText(
+                                remindersTotal > 0
+                                    ? 'You completed $remindersCompleted of $remindersTotal reminders today.'
+                                    : 'No reminders have been scheduled for today.',
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey,
                                   height: 1.4,
@@ -644,25 +955,21 @@ class _ProgressPageState extends State<ProgressPage> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 18),
-
                     Row(
                       children: [
                         Expanded(
                           child: _reminderStat(
                             Icons.check_circle_rounded,
-                            '16',
+                            '$remindersCompleted',
                             'Completed',
                           ),
                         ),
-
                         const SizedBox(width: 12),
-
                         Expanded(
                           child: _reminderStat(
                             Icons.cancel_outlined,
-                            '4',
+                            '${(remindersTotal - remindersCompleted).clamp(0, 999)}',
                             'Missed',
                           ),
                         ),
@@ -680,17 +987,14 @@ class _ProgressPageState extends State<ProgressPage> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
-
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
-
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
-                    const Text(
+                    const TrText(
                       'This Week',
                       style: TextStyle(
                         fontSize: 19,
@@ -698,20 +1002,17 @@ class _ProgressPageState extends State<ProgressPage> {
                         color: Color(0xFF173B35),
                       ),
                     ),
-
                     const SizedBox(height: 18),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
-
                       children: [
-                        _dayProgress('Mon', true),
-                        _dayProgress('Tue', true),
-                        _dayProgress('Wed', true),
-                        _dayProgress('Thu', true),
-                        _dayProgress('Fri', false),
-                        _dayProgress('Sat', false),
-                        _dayProgress('Sun', false),
+                        _dayProgress('Mon', weekStatus['Mon'] ?? false),
+                        _dayProgress('Tue', weekStatus['Tue'] ?? false),
+                        _dayProgress('Wed', weekStatus['Wed'] ?? false),
+                        _dayProgress('Thu', weekStatus['Thu'] ?? false),
+                        _dayProgress('Fri', weekStatus['Fri'] ?? false),
+                        _dayProgress('Sat', weekStatus['Sat'] ?? false),
+                        _dayProgress('Sun', weekStatus['Sun'] ?? false),
                       ],
                     ),
                   ],
@@ -726,26 +1027,24 @@ class _ProgressPageState extends State<ProgressPage> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
-
                 decoration: BoxDecoration(
                   color: const Color(0xFFE4EFEA),
                   borderRadius: BorderRadius.circular(18),
                 ),
-
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.emoji_events_outlined,
                       color: Color(0xFF376B5C),
                       size: 28,
                     ),
-
-                    SizedBox(width: 12),
-
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        'You completed 12 activities this week. Keep going!',
-                        style: TextStyle(
+                      child: TrText(
+                        activitiesCompleted > 0
+                            ? 'You completed $activitiesCompleted ${activitiesCompleted == 1 ? 'activity' : 'activities'} so far. Keep going!'
+                            : 'Start your first activity to begin tracking your achievements!',
+                        style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF376B5C),
                         ),
@@ -829,7 +1128,7 @@ class _ProgressPageState extends State<ProgressPage> {
           borderRadius: BorderRadius.circular(9),
         ),
 
-        child: Text(
+        child: TrText(
           title,
 
           style: TextStyle(
@@ -880,7 +1179,7 @@ class _ProgressPageState extends State<ProgressPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-                Text(
+                TrText(
                   title,
                   style: const TextStyle(
                     fontSize: 16,
@@ -966,7 +1265,7 @@ class _ProgressPageState extends State<ProgressPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-                Text(
+                TrText(
                   title,
                   style: const TextStyle(
                     fontSize: 17,
@@ -977,7 +1276,7 @@ class _ProgressPageState extends State<ProgressPage> {
 
                 const SizedBox(height: 5),
 
-                Text(
+                TrText(
                   status,
                   style: const TextStyle(fontSize: 13, color: Colors.grey),
                 ),
@@ -1061,7 +1360,7 @@ class _ProgressPageState extends State<ProgressPage> {
 
           const SizedBox(height: 4),
 
-          Text(
+          TrText(
             label,
 
             style: const TextStyle(
@@ -1075,32 +1374,6 @@ class _ProgressPageState extends State<ProgressPage> {
     );
   }
 
-  // ==========================================================
-  // MOOD ITEM
-  // ==========================================================
-
-  Widget _moodItem(String day, String emoji, String mood) {
-    return Column(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 28)),
-
-        const SizedBox(height: 6),
-
-        Text(day, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-
-        const SizedBox(height: 3),
-
-        Text(
-          mood,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF376B5C),
-          ),
-        ),
-      ],
-    );
-  }
 
   // ==========================================================
   // REMINDER STAT
@@ -1135,7 +1408,7 @@ class _ProgressPageState extends State<ProgressPage> {
                 ),
               ),
 
-              Text(
+              TrText(
                 label,
 
                 style: const TextStyle(fontSize: 11, color: Colors.grey),
@@ -1173,7 +1446,7 @@ class _ProgressPageState extends State<ProgressPage> {
 
         const SizedBox(height: 7),
 
-        Text(day, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        TrText(day, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );
   }
@@ -1262,14 +1535,19 @@ class _ProgressChartPainter extends CustomPainter {
           ? leftPadding + chartWidth / 2
           : leftPadding + chartWidth * i / (scores.length - 1);
 
-      final y = topPadding + chartHeight * (1 - scores[i] / 100);
+      final clamped = scores[i].clamp(0, 100);
+      final y = (topPadding + chartHeight * (1.0 - clamped / 100.0))
+          .clamp(topPadding, topPadding + chartHeight);
 
       points.add(Offset(x, y));
     }
 
     // ----------------------------------------------------------
-    // LINE
+    // LINE (clipped to chart area)
     // ----------------------------------------------------------
+
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
     final path = Path();
 
@@ -1303,6 +1581,8 @@ class _ProgressChartPainter extends CustomPainter {
 
       textPainter.paint(canvas, Offset(labelX, labelY));
     }
+
+    canvas.restore();
   }
 
   @override

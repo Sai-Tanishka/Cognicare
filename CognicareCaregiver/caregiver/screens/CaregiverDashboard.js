@@ -1,13 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import Header from "../components/Header";
 import StatCard from "../components/StatCard";
-import GamePerformanceCard from "../components/GamePerformanceCard";
 import ReminderCard from "../components/ReminderCard";
+import { getPatientProgress } from "../data/api";
 import {
   patient,
-  games,
   reminders,
   calculateReport,
 } from "../data/patientData";
@@ -15,6 +14,20 @@ import {
 export default function CaregiverDashboard({ onNavigate, selectedPatient }) {
   const report = calculateReport();
   const displayedPatient = selectedPatient || patient;
+  const [progress, setProgress] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    getPatientProgress(displayedPatient.id)
+      .then((data) => active && setProgress(data))
+      .catch(() => active && setProgress(null));
+    return () => {
+      active = false;
+    };
+  }, [displayedPatient.id]);
+
+  const activitiesCompleted = progress?.activities_completed ?? 0;
+  const averageAccuracy = progress?.average_accuracy ?? 0;
 
   return (
     <View style={styles.screen}>
@@ -46,8 +59,8 @@ export default function CaregiverDashboard({ onNavigate, selectedPatient }) {
         <Text style={styles.sectionTitle}>Today's Overview</Text>
 
         <View style={styles.grid}>
-          <StatCard icon="✓" value={report.completedGames} label="Games Played" />
-          <StatCard icon="%" value={`${report.averageAccuracy}%`} label="Avg. Accuracy" />
+          <StatCard icon="✓" value={activitiesCompleted} label="Games Played" />
+          <StatCard icon="%" value={`${averageAccuracy}%`} label="Avg. Accuracy" />
           <StatCard icon="◷" value="4" label="Care Reminders" />
           <StatCard icon="!" value={report.missedReminders} label="Attention Needed" danger />
         </View>
@@ -62,9 +75,18 @@ export default function CaregiverDashboard({ onNavigate, selectedPatient }) {
 
         <Text style={styles.sectionTitle}>Recent Cognitive Activity</Text>
 
-        {games.slice(0, 4).map((game) => (
-          <GamePerformanceCard key={game.id} game={game} />
-        ))}
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyTitle}>
+            {activitiesCompleted === 0
+              ? "No activities recorded yet"
+              : `${activitiesCompleted} activity results saved`}
+          </Text>
+          <Text style={styles.emptyText}>
+            {activitiesCompleted === 0
+              ? "This patient starts at 0. Completed games appear after they sync."
+              : `Current average accuracy: ${averageAccuracy}%`}
+          </Text>
+        </View>
 
         <TouchableOpacity
           style={styles.primaryButton}
@@ -153,6 +175,9 @@ const styles = {
     marginBottom: 11,
     marginTop: 2,
   },
+  emptyCard: { backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#DDE4DF", marginBottom: 12 },
+  emptyTitle: { color: "#17352F", fontSize: 14, fontWeight: "900" },
+  emptyText: { color: "#6E7D79", fontSize: 12, lineHeight: 18, marginTop: 6 },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",

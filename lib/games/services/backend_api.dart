@@ -1,9 +1,15 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class BackendApi {
-  static const String baseUrl = 'http://172.20.10.2:8000';
+  static String get baseUrl {
+    if (kIsWeb) return 'http://127.0.0.1:8000';
+    return defaultTargetPlatform == TargetPlatform.android
+        ? 'http://10.0.2.2:8000'
+        : 'http://127.0.0.1:8000';
+  }
 
   static Future<Map<String, dynamic>> saveGameAttempt({
     required String eventId,

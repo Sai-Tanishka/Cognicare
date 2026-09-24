@@ -39,3 +39,6 @@ export const attachPatient = (caregiverId, patientId) =>
     body: JSON.stringify({ patient_id: patientId, relationship_type: "Primary caregiver" }),
   });
 
+export const getPatientProgress = (patientId) =>
+  request(`/people/patients/${patientId}/progress`);
+

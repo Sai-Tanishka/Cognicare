@@ -180,7 +180,12 @@ export default function App() {
     ];
     await AsyncStorage.setItem("caregiver_patients", JSON.stringify(nextPatients));
     setAttachedPatients(nextPatients);
-    await selectPatient(patient);
+    await selectPatient({
+      ...attachedPatient,
+      age: patient.age,
+      gender: patient.gender,
+      caregiverName: caregiver.name,
+    });
   };
 
   if (isLoading) {

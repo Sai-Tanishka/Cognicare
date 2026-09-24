@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../repositories/game_repository.dart';
+import '../../widgets/language_selector.dart';
 import '../core/timer_manager.dart';
 import '../models/difficulty_level.dart';
 import '../models/game_result.dart';
@@ -147,19 +148,19 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
+          title: const TrText(
             'Time Up!',
             textAlign: TextAlign.center,
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              const TrText(
                 'Good effort! Your time has ended.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              Text(
+              TrText(
                 'Score: ${result.score}',
                 style: const TextStyle(
                   fontSize: 22,
@@ -167,22 +168,22 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
+              TrText(
                 'Matches: ${_engine.correctMatches}/${_engine.pairsCount}',
               ),
-              Text(
+              TrText(
                 'Attempts: ${result.attempts}',
               ),
-              Text(
+              TrText(
                 'Accuracy: ${result.accuracy.toStringAsFixed(0)}%',
               ),
-              Text(
+              TrText(
                 'Avg. Response Time: '
                 '${result.averageResponseTime.toStringAsFixed(1)}s',
               ),
               const SizedBox(height: 8),
-              Text('Completed at: ${result.difficulty.name}'),
-              Text(
+              TrText('Completed at: ${result.difficulty.name}'),
+              TrText(
                 'Continue at: '
                 '${result.nextDifficulty?.name ?? result.difficulty.name}',
               ),
@@ -194,14 +195,14 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
                 Navigator.pop(context);
                 _restartGame();
               },
-              child: const Text('Try Again'),
+              child: const TrText('Try Again'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 Navigator.pop(context);
               },
-              child: const Text('Done'),
+              child: const TrText('Done'),
             ),
           ],
         );
@@ -274,7 +275,7 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
           result.gameId,
           result.nextDifficulty ?? result.difficulty,
         );
-        _saveResult(result);
+        await _saveResult(result);
 
         _showGameCompletedDialog(result);
       }
@@ -332,19 +333,19 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
         barrierDismissible: false,
         builder: (context) {
           return AlertDialog(
-            title: const Text(
+            title: const TrText(
               'Well Done! 🎉',
               textAlign: TextAlign.center,
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                const TrText(
                   'You matched all the pairs!',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-                Text(
+                TrText(
                   'Score: ${_engine.score}',
                   style: const TextStyle(
                     fontSize: 22,
@@ -352,23 +353,23 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                TrText(
                   'Accuracy: ${_engine.accuracy.toStringAsFixed(0)}%',
                 ),
-                Text(
+                TrText(
                   'Attempts: ${_engine.attempts}',
                 ),
-                Text(
+                TrText(
                   'Avg. Response Time: '
                   '${_engine.averageResponseTime.toStringAsFixed(1)}s',
                 ),
                 const SizedBox(height: 8),
-                Text(
+                TrText(
                   'Performance: '
                   '${_engine.performance.toStringAsFixed(0)}/100',
                 ),
                 const SizedBox(height: 8),
-                Text(
+                TrText(
                   'Next Difficulty: '
                   '${_engine.nextDifficulty?.name ?? _engine.difficultyName}',
                 ),
@@ -380,14 +381,14 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
                   Navigator.pop(context);
                   _startAdaptiveNextGame();
                 },
-                child: const Text('Play Again'),
+                child: const TrText('Play Again'),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                   Navigator.pop(context);
                 },
-                child: const Text('Done'),
+                child: const TrText('Done'),
               ),
             ],
           );
@@ -403,13 +404,17 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F7F2),
         elevation: 0,
-        title: const Text(
+        title: const TrText(
           'Memory Match',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF173B35),
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(compact: true),
+          SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -421,7 +426,7 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
               const SizedBox(height: 20),
 
               if (_isPreviewing) ...[
-                const Text(
+                const TrText(
                   'Remember the cards',
                   style: TextStyle(
                     fontSize: 22,
@@ -432,7 +437,7 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
 
                 const SizedBox(height: 6),
 
-                const Text(
+                const TrText(
                   'Study the cards before they are hidden.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -443,7 +448,7 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
 
                 const SizedBox(height: 8),
 
-                Text(
+                TrText(
                   'Hiding in $_previewSecondsRemaining seconds',
                   style: const TextStyle(
                     fontSize: 18,
@@ -466,7 +471,7 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
+                    child: const TrText(
                       "I'm Ready",
                       style: TextStyle(
                         fontSize: 18,
@@ -567,7 +572,7 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
             size: 24,
           ),
           const SizedBox(height: 4),
-          Text(
+          TrText(
             label,
             style: const TextStyle(
               fontSize: 12,
@@ -575,7 +580,7 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
+          TrText(
             value,
             style: const TextStyle(
               fontSize: 18,
@@ -634,7 +639,7 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
       child: ElevatedButton.icon(
         onPressed: _restartGame,
         icon: const Icon(Icons.refresh_rounded),
-        label: const Text(
+        label: const TrText(
           'Restart Game',
           style: TextStyle(
             fontSize: 17,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/language_selector.dart';
 
 class MoodPage extends StatefulWidget {
   const MoodPage({super.key});
@@ -45,9 +46,6 @@ class _MoodPageState extends State<MoodPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Your $selectedMood mood has been recorded.')),
     );
-
-    // TODO:
-    // Send selected mood to backend later.
   }
 
   @override
@@ -58,36 +56,34 @@ class _MoodPageState extends State<MoodPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F7F2),
         elevation: 0,
-
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
-
           icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF173B35)),
         ),
-
-        title: const Text(
+        title: const TrText(
           'My Mood',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF173B35),
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
 
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
-
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // =================================================
               // INTRODUCTION
               // =================================================
-
-              const Text(
+              const TrText(
                 'How are you feeling today?',
                 style: TextStyle(
                   fontSize: 25,
@@ -98,7 +94,7 @@ class _MoodPageState extends State<MoodPage> {
 
               const SizedBox(height: 8),
 
-              const Text(
+              const TrText(
                 'Take a moment to tell us how you feel.',
                 style: TextStyle(fontSize: 15, color: Colors.grey),
               ),
@@ -111,55 +107,42 @@ class _MoodPageState extends State<MoodPage> {
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-
                 itemCount: moods.length,
-
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                   childAspectRatio: 1.45,
                 ),
-
                 itemBuilder: (context, index) {
                   final mood = moods[index];
-
                   final bool isSelected = selectedMood == mood['name'];
 
                   return GestureDetector(
                     onTap: () {
                       selectMood(mood['name'] as String);
                     },
-
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-
                       decoration: BoxDecoration(
                         color: mood['color'] as Color,
-
                         borderRadius: BorderRadius.circular(20),
-
                         border: Border.all(
                           color: isSelected
                               ? const Color(0xFF376B5C)
                               : Colors.transparent,
-
                           width: isSelected ? 3 : 0,
                         ),
                       ),
-
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-
                         children: [
                           Text(
                             mood['emoji'] as String,
                             style: const TextStyle(fontSize: 35),
                           ),
-
                           const SizedBox(height: 7),
-
-                          Text(
+                          TrText(
                             mood['name'] as String,
                             style: TextStyle(
                               fontSize: 16,
@@ -184,22 +167,16 @@ class _MoodPageState extends State<MoodPage> {
               SizedBox(
                 width: double.infinity,
                 height: 52,
-
                 child: ElevatedButton.icon(
                   onPressed: saveMood,
-
                   icon: const Icon(Icons.check_circle_outline),
-
-                  label: const Text(
+                  label: const TrText(
                     'Save My Mood',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF376B5C),
-
                     foregroundColor: Colors.white,
-
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -212,7 +189,7 @@ class _MoodPageState extends State<MoodPage> {
               // =================================================
               // TODAY'S MOOD
               // =================================================
-              const Text(
+              const TrText(
                 "Today's Mood",
                 style: TextStyle(
                   fontSize: 21,
@@ -226,29 +203,24 @@ class _MoodPageState extends State<MoodPage> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
-
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
-
                 child: Row(
                   children: [
                     Container(
                       width: 65,
                       height: 65,
-
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE4EFEA),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE4EFEA),
                         shape: BoxShape.circle,
                       ),
-
                       child: Center(
                         child: Text(
                           selectedMood == null
                               ? '🙂'
                               : _getEmoji(selectedMood!),
-
                           style: const TextStyle(fontSize: 35),
                         ),
                       ),
@@ -259,9 +231,8 @@ class _MoodPageState extends State<MoodPage> {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-
                         children: [
-                          Text(
+                          TrText(
                             selectedMood ?? 'Not recorded yet',
                             style: const TextStyle(
                               fontSize: 18,
@@ -272,7 +243,7 @@ class _MoodPageState extends State<MoodPage> {
 
                           const SizedBox(height: 5),
 
-                          Text(
+                          TrText(
                             selectedMood == null
                                 ? 'Choose a mood above.'
                                 : 'Thank you for sharing how you feel.',
@@ -293,7 +264,7 @@ class _MoodPageState extends State<MoodPage> {
               // =================================================
               // MOOD TREND
               // =================================================
-              const Text(
+              const TrText(
                 'Mood Trend',
                 style: TextStyle(
                   fontSize: 21,
@@ -304,7 +275,7 @@ class _MoodPageState extends State<MoodPage> {
 
               const SizedBox(height: 8),
 
-              const Text(
+              const TrText(
                 'Your mood during the past week.',
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
@@ -314,20 +285,16 @@ class _MoodPageState extends State<MoodPage> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
-
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
-
                 child: Column(
                   children: [
                     SizedBox(
                       height: 180,
-
                       child: CustomPaint(
                         painter: _MoodChartPainter(moodHistory),
-
                         child: Container(),
                       ),
                     ),
@@ -336,9 +303,8 @@ class _MoodPageState extends State<MoodPage> {
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
-
                       children: moodHistory.map((item) {
-                        return Text(
+                        return TrText(
                           item['day'] as String,
                           style: const TextStyle(
                             fontSize: 11,
@@ -356,7 +322,7 @@ class _MoodPageState extends State<MoodPage> {
               // =================================================
               // WEEKLY SUMMARY
               // =================================================
-              const Text(
+              const TrText(
                 'Weekly Summary',
                 style: TextStyle(
                   fontSize: 21,
@@ -394,24 +360,22 @@ class _MoodPageState extends State<MoodPage> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
-
                 decoration: BoxDecoration(
                   color: const Color(0xFFE4EFEA),
                   borderRadius: BorderRadius.circular(18),
                 ),
-
-                child: Row(
+                child: const Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.lightbulb_outline_rounded,
                       color: Color(0xFF376B5C),
                       size: 30,
                     ),
 
-                    const SizedBox(width: 14),
+                    SizedBox(width: 14),
 
-                    const Expanded(
-                      child: Text(
+                    Expanded(
+                      child: TrText(
                         'You have been feeling positive most days this week. Keep following your daily routine!',
                         style: TextStyle(
                           fontSize: 14,
@@ -440,19 +404,14 @@ class _MoodPageState extends State<MoodPage> {
     switch (mood) {
       case 'Happy':
         return '😊';
-
       case 'Calm':
         return '😌';
-
       case 'Okay':
         return '🙂';
-
       case 'Sad':
         return '😔';
-
       case 'Anxious':
         return '😟';
-
       default:
         return '🙂';
     }
@@ -465,20 +424,15 @@ class _MoodPageState extends State<MoodPage> {
   Widget _summaryCard(IconData icon, String title, String value) {
     return Container(
       padding: const EdgeInsets.all(16),
-
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-
         children: [
           Icon(icon, color: const Color(0xFF376B5C), size: 28),
-
           const SizedBox(height: 12),
-
           Text(
             value,
             style: const TextStyle(
@@ -487,10 +441,8 @@ class _MoodPageState extends State<MoodPage> {
               color: Color(0xFF173B35),
             ),
           ),
-
           const SizedBox(height: 4),
-
-          Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          TrText(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         ],
       ),
     );
@@ -527,13 +479,11 @@ class _MoodChartPainter extends CustomPainter {
     const double bottomPadding = 10;
 
     final chartWidth = size.width - leftPadding - rightPadding;
-
     final chartHeight = size.height - topPadding - bottomPadding;
 
     // Grid lines
     for (int i = 1; i <= 5; i++) {
       final y = topPadding + chartHeight - ((i - 1) / 4) * chartHeight;
-
       canvas.drawLine(
         Offset(leftPadding, y),
         Offset(size.width - rightPadding, y),
@@ -542,12 +492,9 @@ class _MoodChartPainter extends CustomPainter {
     }
 
     final path = Path();
-
     for (int i = 0; i < data.length; i++) {
       final score = data[i]['score'] as int;
-
       final x = leftPadding + (i / (data.length - 1)) * chartWidth;
-
       final y = topPadding + chartHeight - ((score - 1) / 4) * chartHeight;
 
       if (i == 0) {
@@ -556,17 +503,13 @@ class _MoodChartPainter extends CustomPainter {
         path.lineTo(x, y);
       }
     }
-
     canvas.drawPath(path, paint);
 
     // Points
     for (int i = 0; i < data.length; i++) {
       final score = data[i]['score'] as int;
-
       final x = leftPadding + (i / (data.length - 1)) * chartWidth;
-
       final y = topPadding + chartHeight - ((score - 1) / 4) * chartHeight;
-
       canvas.drawCircle(Offset(x, y), 5, dotPaint);
     }
   }
