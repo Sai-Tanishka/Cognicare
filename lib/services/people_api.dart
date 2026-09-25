@@ -205,6 +205,9 @@ class PeopleApi {
     String? patientSeverity,
     String? patientGender,
     String? patientPhone,
+    String? patientDoctorName,
+    String? patientDoctorContact,
+    String? patientDoctorCredentials,
   }) async {
     final payload = {
       'caregiver_name': caregiverName.trim(),
@@ -216,7 +219,7 @@ class PeopleApi {
       'patient_name': patientName.trim(),
       'patient_email': patientEmail.trim().toLowerCase(),
       'patient_password': patientPassword,
-      'patient_age': patientAge,
+      'patient_age': ?patientAge,
       if (patientDiagnosis != null && patientDiagnosis.isNotEmpty)
         'patient_diagnosis': patientDiagnosis,
       if (patientSeverity != null && patientSeverity.isNotEmpty)
@@ -225,6 +228,12 @@ class PeopleApi {
         'patient_gender': patientGender,
       if (patientPhone != null && patientPhone.isNotEmpty)
         'patient_phone': patientPhone,
+      if (patientDoctorName != null && patientDoctorName.isNotEmpty)
+        'patient_doctor_name': patientDoctorName,
+      if (patientDoctorContact != null && patientDoctorContact.isNotEmpty)
+        'patient_doctor_contact': patientDoctorContact,
+      if (patientDoctorCredentials != null && patientDoctorCredentials.isNotEmpty)
+        'patient_doctor_credentials': patientDoctorCredentials,
     };
 
     final response = await http.post(
@@ -255,13 +264,16 @@ class PeopleApi {
     String? patientSeverity,
     String? patientGender,
     String? patientPhone,
+    String? patientDoctorName,
+    String? patientDoctorContact,
+    String? patientDoctorCredentials,
     String relationshipType = 'Primary caregiver',
   }) async {
     final payload = {
       'patient_name': patientName.trim(),
       'patient_email': patientEmail.trim().toLowerCase(),
       'patient_password': patientPassword,
-      'patient_age': patientAge,
+      'patient_age': ?patientAge,
       if (patientDiagnosis != null && patientDiagnosis.isNotEmpty)
         'patient_diagnosis': patientDiagnosis,
       if (patientSeverity != null && patientSeverity.isNotEmpty)
@@ -270,6 +282,12 @@ class PeopleApi {
         'patient_gender': patientGender,
       if (patientPhone != null && patientPhone.isNotEmpty)
         'patient_phone': patientPhone,
+      if (patientDoctorName != null && patientDoctorName.isNotEmpty)
+        'patient_doctor_name': patientDoctorName,
+      if (patientDoctorContact != null && patientDoctorContact.isNotEmpty)
+        'patient_doctor_contact': patientDoctorContact,
+      if (patientDoctorCredentials != null && patientDoctorCredentials.isNotEmpty)
+        'patient_doctor_credentials': patientDoctorCredentials,
       'relationship_type': relationshipType,
     };
 

@@ -1,9 +1,16 @@
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.database.connection import engine
 from app.database.connection import Base
+from app.models.daily_task import DailyTask, DailyTaskTemplate
+from app.models.game_attempt import GameAttempt, GameSession
+from app.models.people import Caregiver, CaregiverPatient, Patient, PatientDailyProgress, PatientProgress
+from app.routes.daily_tasks import router as daily_tasks_router
 from app.routes.game_attempts import router as game_attempts_router
 from app.routes.people import router as people_router
 from app.routes.translation import router as translation_router
@@ -20,6 +27,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static uploads directory for daily task proof (photo, video, audio)
+uploads_dir = Path(__file__).resolve().parents[1] / "uploads"
+uploads_dir.mkdir(parents=True, exist_ok=True)
+(uploads_dir / "daily_tasks").mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+
+app.include_router(daily_tasks_router)
 app.include_router(game_attempts_router)
 app.include_router(people_router)
 app.include_router(translation_router)

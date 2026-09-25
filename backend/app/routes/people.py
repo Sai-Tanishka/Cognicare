@@ -77,6 +77,9 @@ class CaregiverRegisterWithPatientRequest(BaseModel):
     patient_severity: str | None = None
     patient_gender: str | None = None
     patient_phone: str | None = None
+    patient_doctor_name: str | None = None
+    patient_doctor_contact: str | None = None
+    patient_doctor_credentials: str | None = None
 
 
 class CaregiverCreatePatientRequest(BaseModel):
@@ -88,6 +91,9 @@ class CaregiverCreatePatientRequest(BaseModel):
     patient_severity: str | None = None
     patient_gender: str | None = None
     patient_phone: str | None = None
+    patient_doctor_name: str | None = None
+    patient_doctor_contact: str | None = None
+    patient_doctor_credentials: str | None = None
     relationship_type: str = "Primary caregiver"
 
 
@@ -416,6 +422,9 @@ def register_caregiver_with_patient(
         severity=data.patient_severity,
         gender=data.patient_gender,
         phone=data.patient_phone,
+        doctor_name=data.patient_doctor_name,
+        doctor_contact=data.patient_doctor_contact,
+        doctor_credentials=data.patient_doctor_credentials,
     )
     db.add(patient)
     db.flush()
@@ -470,6 +479,9 @@ def caregiver_create_patient(
         severity=data.patient_severity,
         gender=data.patient_gender,
         phone=data.patient_phone,
+        doctor_name=data.patient_doctor_name,
+        doctor_contact=data.patient_doctor_contact,
+        doctor_credentials=data.patient_doctor_credentials,
     )
     db.add(patient)
     db.flush()
@@ -631,6 +643,15 @@ def build_patient_daily_progress_data(patient: Patient, db: Session) -> dict:
     return {
         "patient_id": str(patient.patient_id),
         "patient_name": patient.name,
+        "email": patient.email,
+        "phone": patient.phone,
+        "age": patient.age,
+        "diagnosis": patient.diagnosis,
+        "severity": patient.severity,
+        "doctor_name": patient.doctor_name,
+        "doctor_contact": patient.doctor_contact,
+        "doctor_credentials": patient.doctor_credentials,
+        "doctor_role": patient.doctor_credentials or "Neurologist / Specialist",
         "date": today.isoformat(),
         "activities_completed_today": today_attempts_count,
         "daily_goal_target": daily_goal_target,

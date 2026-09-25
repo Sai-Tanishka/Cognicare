@@ -288,3 +288,79 @@ CREATE INDEX idx_sync_events_patient
 
 CREATE INDEX idx_sync_events_status
     ON sync_events(status);
+
+
+-- =========================================================
+-- 10. DAILY TASKS (DAILY SPT - SUBJECT PERFORMED TASKS)
+-- Completely separate from cognitive games. Home-based, safe,
+-- non-fatiguing daily activities for dementia patients.
+-- =========================================================
+
+CREATE TABLE daily_task_templates (
+    template_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code VARCHAR(50) UNIQUE NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    description TEXT NOT NULL,
+    instructions TEXT NOT NULL,
+    visual_steps JSONB NOT NULL DEFAULT '[]'::jsonb,
+    task_category VARCHAR(50) NOT NULL,
+    difficulty VARCHAR(30) NOT NULL DEFAULT 'EASY',
+    submission_type VARCHAR(30) NOT NULL, -- PHOTO, VIDEO, AUDIO, NONE
+    visual_instruction_url VARCHAR(255),
+    reference_image_url VARCHAR(255),
+    estimated_duration VARCHAR(50) NOT NULL DEFAULT '5 mins',
+    reading_passage TEXT,
+    order_index INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE daily_tasks (
+    daily_task_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL,
+    template_id UUID,
+    assigned_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    title VARCHAR(150) NOT NULL,
+    description TEXT NOT NULL,
+    instructions TEXT NOT NULL,
+    visual_steps JSONB NOT NULL DEFAULT '[]'::jsonb,
+    task_category VARCHAR(50) NOT NULL,
+    difficulty VARCHAR(30) NOT NULL DEFAULT 'EASY',
+    submission_type VARCHAR(30) NOT NULL, -- PHOTO, VIDEO, AUDIO, NONE
+    visual_instruction_url VARCHAR(255),
+    reference_image_url VARCHAR(255),
+    estimated_duration VARCHAR(50) NOT NULL DEFAULT '5 mins',
+    reading_passage TEXT,
+
+    status VARCHAR(30) NOT NULL DEFAULT 'ASSIGNED', -- ASSIGNED, IN_PROGRESS, SUBMITTED, REVIEWED, APPROVED, NEEDS_RETRY
+    submitted_at TIMESTAMPTZ,
+    submission_url VARCHAR(500),
+    submission_file_name VARCHAR(255),
+    submission_file_type VARCHAR(100),
+    submission_notes TEXT,
+
+    caregiver_review_status VARCHAR(30) NOT NULL DEFAULT 'PENDING', -- PENDING, APPROVED, NEEDS_RETRY
+    caregiver_feedback TEXT,
+    reviewed_at TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_daily_task_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_daily_task_template
+        FOREIGN KEY (template_id)
+        REFERENCES daily_task_templates(template_id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT unique_patient_daily_task_date
+        UNIQUE (patient_id, assigned_date)
+);
+
+CREATE INDEX idx_daily_tasks_patient_date
+    ON daily_tasks(patient_id, assigned_date);
+
+CREATE INDEX idx_daily_tasks_status
+    ON daily_tasks(status);
+

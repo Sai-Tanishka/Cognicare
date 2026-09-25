@@ -7,8 +7,6 @@ import 'caregiver_dashboard.dart';
 import 'forgot_password.dart';
 import '../services/auth_storage.dart';
 import '../services/people_api.dart';
-import '../services/screen_time_service.dart';
-import '../services/translation_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -34,13 +32,6 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    final isLimitReached = await ScreenTimeService.instance.isLimitReachedForToday();
-    if (isLimitReached) {
-      if (!mounted) return;
-      _showScreenTimeLimitDialog();
       return;
     }
 
@@ -72,71 +63,20 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _showScreenTimeLimitDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Row(
-          children: [
-            Icon(Icons.bedtime_rounded, color: Color(0xFF376B5C), size: 28),
-            SizedBox(width: 10),
-            Expanded(
-              child: TrText(
-                'Daily Limit Reached (1 Hour)',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF173B35),
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TrText(
-              'The 1-hour healthy screen time limit for today has already been completed.',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 8),
-            TrText(
-              'To protect your cognitive health, memory, and eyes, please take a break and come back tomorrow.',
-              style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.35),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              await ScreenTimeService.instance.resetToday();
-              if (ctx.mounted) Navigator.pop(ctx);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      TranslationService.instance.getCached(
-                        'Screen time reset for testing. You can now log in.',
-                      ),
-                    ),
-                  ),
-                );
-              }
-            },
-            child: const TrText('Reset (Test)', style: TextStyle(fontSize: 12)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF376B5C),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const TrText('Understood'),
-          ),
-        ],
+  void googleLogin() {
+    // Google authentication will be connected here later.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Google authentication will be connected later.'),
+      ),
+    );
+  }
+
+  void appleLogin() {
+    // Apple authentication will be connected here later.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Apple authentication will be connected later.'),
       ),
     );
   }
@@ -317,7 +257,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
 
                 SizedBox(
                   width: double.infinity,
@@ -341,34 +281,67 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 25),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: googleLogin,
+                    icon: const Icon(Icons.g_mobiledata_rounded),
+                    label: const TrText('Continue with Google'),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: appleLogin,
+                    icon: const Icon(Icons.apple),
+                    label: const TrText('Continue with Apple'),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 25),
 
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE4EFEA).withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(18),
+                    color: const Color(0xFFE4EFEA).withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: const Color(0xFF376B5C).withValues(alpha: 0.25),
                     ),
                   ),
                   child: const Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
                         Icons.info_outline_rounded,
                         color: Color(0xFF376B5C),
-                        size: 24,
+                        size: 22,
                       ),
                       SizedBox(width: 12),
                       Expanded(
                         child: TrText(
                           'Patient credentials are provided by your caregiver. New caregivers can register via the Caregiver Portal.',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: Color(0xFF173B35),
-                            height: 1.4,
+                            height: 1.35,
                           ),
                         ),
                       ),
@@ -376,7 +349,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
 
                 Center(
                   child: TextButton.icon(
@@ -390,13 +363,13 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     icon: const Icon(
                       Icons.volunteer_activism_rounded,
-                      size: 20,
+                      size: 18,
                       color: Color(0xFF376B5C),
                     ),
                     label: const TrText(
                       'Are you a Caregiver? Go to Caregiver Portal',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF376B5C),
                       ),

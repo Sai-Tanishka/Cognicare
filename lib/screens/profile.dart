@@ -83,6 +83,10 @@ class _ProfilePageState extends State<ProfilePage> {
           (data['doctor_contact'] as String?)?.trim() ?? 'Not Assigned';
       doctorCredentials =
           (data['doctor_credentials'] as String?)?.trim() ?? 'Credentials on file';
+      if (data['doctor_credentials'] != null &&
+          (data['doctor_credentials'] as String).trim().isNotEmpty) {
+        doctorRole = (data['doctor_credentials'] as String).trim();
+      }
 
       final cg = data['caregiver'] as Map<String, dynamic>?;
       if (cg != null) {

@@ -61,3 +61,7 @@ CognicareCaregiver/node_modules/
 CognicareCaregiver/.expo/
 CognicareCaregiver/dist/
 CognicareCaregiver/build/
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
